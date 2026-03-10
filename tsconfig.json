@@ -4,8 +4,36 @@
     "strict": true,
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
+      ],
+      "@assets/*": [
+        "./src/assets/*"
+      ],
+      "@components/*": [
+        "./src/components/*"
+      ],
+      "@contexts/*":[
+        "./src/contexts/*"
+      ],
+      "@constants/*":[
+        "./src/constants/*"
+      ],
+      "@type/*":[
+        "./src/types/*"
+      ],
+      "@colors/*":[
+        "./src/colors/*"
+      ],
+      "@hooks/*":[
+        "./src/hooks/*"
+      ],
+      "@services/*":[
+        "./src/services/*"
+      ],
+      "@styles/*":[
+        "./src/styles/*"
       ]
+      
     }
   },
   "include": [
