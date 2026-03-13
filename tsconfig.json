@@ -21,6 +21,9 @@
       "@type/*":[
         "./src/types/*"
       ],
+      "@mocks/*":[
+        "./src/mocks/*"
+      ],
       "@colors/*":[
         "./src/colors/*"
       ],

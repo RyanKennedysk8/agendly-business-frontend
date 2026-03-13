@@ -4,7 +4,7 @@ import { View, Text, StyleSheet } from 'react-native';
 export default function FinanceiroScreen() {
   return (
     <View style={styles.container}>
-      <Text>Dashboard Financeiro</Text>
+      <Text>Profile</Text>
     </View>
   );
 }

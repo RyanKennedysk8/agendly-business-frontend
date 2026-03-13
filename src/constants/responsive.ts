@@ -3,8 +3,7 @@ import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 const { width } = Dimensions.get('window');
 
-// Se for Web e a tela for maior que um tablet, travamos o multiplicador
-// simulando uma tela de 400px de largura máxima para o cálculo base.
+
 const isDesktopWeb = Platform.OS === 'web' && width > 768;
 
 export const l = (size: number) => isDesktopWeb ? size : scale(size);
