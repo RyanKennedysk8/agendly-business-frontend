@@ -8,7 +8,5 @@ export * from './HomeHeader';
 export * from './ListHeader';
 export * from './ProfileHeader';
 export * from './EditeProfileHeader';
-export * from './SearchHeader';
+export * from './SearchHeaderScreens';
 export * from './DetailSearchHeader';
-export * from './StoreSearchHeader';
-export * from './DetailSearchHeaderAnimated';

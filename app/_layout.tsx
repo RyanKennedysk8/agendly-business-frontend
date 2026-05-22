@@ -3,9 +3,10 @@ import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
+import { NativeStackHeaderProps } from '@react-navigation/native-stack';
 
-import { useFonts } from '@/hooks/useFonts'; 
-
+import { useFonts } from '@/hooks/useFonts';
+import { CustomHeader } from '@/components/layout/header/orquestrador/CustomHeader';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -14,22 +15,24 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontsLoaded) {
-      // Libera a renderização da UI apenas quando as fontes estiverem na memória
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
 
-  // Se as fontes não carregaram, não renderiza a árvore de componentes
   if (!fontsLoaded) {
-    return null; 
+    return null;
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1}}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(main)" />
-        </Stack>
+        <Stack
+          screenOptions={{
+            header: (props: NativeStackHeaderProps) => (
+              <CustomHeader {...props} />
+            ),
+          } as any}
+        />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -3,6 +3,8 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { td, a, l } from '@/constants/responsive';
+import { Colors } from '@/colors/color';
+import { fonts } from '@/assets/fonts/fonts';
 
 interface FinancialDashboardProps {
   revenue: number;
@@ -20,7 +22,7 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({ revenue,
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>Saúde Financeira (Hoje)</Text>
+        <Text style={styles.sectionTitle}>{"Controle Financeiro - Janeiro"}</Text>
         <Pressable onPress={onViewDetails}>
           <Text style={styles.linkText}>Ver Detalhes</Text>
         </Pressable>
@@ -55,33 +57,78 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({ revenue,
 };
 
 const styles = StyleSheet.create({
-  section: { marginBottom: a(32) },
+  section: { 
+    marginBottom: a(32) 
+  },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
     marginBottom: a(16),
+    marginHorizontal:l(5)
   },
-  sectionTitle: { fontSize: td(18), fontWeight: '700', color: '#1E293B' },
-  linkText: { fontSize: td(14), fontWeight: '600', color: '#2563EB' },
-  financialGrid: { gap: a(12) },
-  financeRow: { flexDirection: 'row', gap: l(12) },
+  sectionTitle: { 
+    fontSize: td(16), 
+    fontFamily:fonts.robotoMedium,
+    color: Colors.corText
+  },
+  linkText: { 
+    fontSize: td(12), 
+    fontFamily:fonts.robotoBold, 
+    color: Colors.corScreen 
+  },
+  financialGrid: { 
+    gap: a(12) 
+  },
+  financeRow: { 
+    flexDirection: 'row', 
+    gap: l(12) 
+  },
   financeCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
     borderRadius: td(16),
     padding: td(20),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 2,
+    borderWidth:1,
+    borderColor:Colors.corContainer,
   },
-  profitCard: { backgroundColor: '#0F172A', width: '100%' },
-  subCard: { flex: 1 },
-  financeIconRow: { flexDirection: 'row', alignItems: 'center', marginBottom: a(8), gap: l(6) },
-  financeLabelWhite: { fontSize: td(14), color: '#94A3B8', fontWeight: '500', marginBottom: a(4) },
-  financeValueWhite: { fontSize: td(32), fontWeight: '800', color: '#FFFFFF', letterSpacing: -1 },
-  financeLabel: { fontSize: td(13), color: '#64748B', fontWeight: '600' },
-  financeValueGreen: { fontSize: td(20), fontWeight: '700', color: '#2E7D32' },
-  financeValueRed: { fontSize: td(20), fontWeight: '700', color: '#D32F2F' },
+  profitCard: { 
+    backgroundColor: Colors.corScreen, 
+    width: '100%' 
+  },
+  subCard: { 
+    flex: 1 
+  },
+  financeIconRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: a(8), 
+    gap: l(6) 
+  },
+  financeLabelWhite: { 
+    fontSize: td(14), 
+    color: '#94A3B8', 
+    fontWeight: '500', 
+    marginBottom: a(4) 
+  },
+  financeValueWhite: { 
+    fontSize: td(32), 
+    fontWeight: '800', 
+    color: '#FFFFFF', 
+    letterSpacing: -1 
+  },
+  financeLabel: { 
+    fontSize: td(13), 
+    color: '#64748B', 
+    fontWeight: '600' 
+  },
+  financeValueGreen: { 
+    fontSize: td(20), 
+    fontWeight: '700', 
+    color: '#2E7D32' 
+  },
+  financeValueRed: { 
+    fontSize: td(20), 
+    fontWeight: '700', 
+    color: '#D32F2F' 
+  },
 });

@@ -10,9 +10,8 @@ import { Sidebar } from '@/components/layout/sidebar/Sidebar';
 
 const TAB_SCREENS = [
   { name: 'home', title: 'Início', icon: 'home' },
-  { name: 'checkIn', title: 'Check-in', icon: 'bag-check' },
-  { name: 'agendamentos', title: 'Agendamentos', icon: 'calendar' }, 
-  { name: 'cliente', title: 'Cliente', icon: 'people' },
+  { name: 'agendamento', title: 'Agendamentos', icon: 'calendar' }, 
+  { name: 'atendimento', title: 'Atendimento', icon: 'cart' },
   { name: 'profile', title: 'Perfil', icon: 'storefront' },
 ];
 

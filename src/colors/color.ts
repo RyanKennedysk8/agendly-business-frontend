@@ -26,13 +26,13 @@ export type ColorPalette = {
     pink:string;
     green:string;
     orange:string;
-  };
+  }; 
   
   export const Colors: ColorPalette = {
-    corScreen: '#FF7A00',
-    corScreenDisable:'rgba(255, 154, 60, 0.5)',
+    corScreen: '#111827',
+    corScreenDisable:'rgba(17, 24, 39, 0.5)',
   
-    corContainer:'#F8FAFC',
+    corContainer:"#efefef",
     
     corButton: '#E86A00',
     corButtonDisable: 'rgba(255, 154, 60, 0.5)',

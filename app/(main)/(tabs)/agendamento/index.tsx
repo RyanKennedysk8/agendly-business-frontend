@@ -5,6 +5,7 @@ import { DesktopAgenda } from '@/components/features/agendamentos/DesktopAgenda'
 import { MobileAgenda } from '@components/features/agendamentos/MobileAgenda';
 import { AppointmentResponseDTO, EmployeeSummaryDTO } from '@type/appointments';
 import { MOCK_APPOINTMENTS, MOCK_STAFF } from '@/mocks/appointments';
+import { Stack } from 'expo-router';
 
 
 export default function AgendamentoScreen() {
@@ -33,16 +34,33 @@ export default function AgendamentoScreen() {
 
   return (
     <View style={styles.container}>
+
       {isDesktop ? (
         <DesktopAgenda appointments={appointments} staffList={staffList} />
       ) : (
-        <MobileAgenda appointments={appointments} staffList={staffList} />
+        <View style={{flex:1}}>
+          <Stack.Screen 
+            options={{
+              headerType:"custom",
+              
+            }as any}
+          />
+          <MobileAgenda appointments={appointments} staffList={staffList} />
+        </View>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#FFFFFF' 
+  },
+  loadingContainer: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: '#F8FAFC' 
+  },
 });

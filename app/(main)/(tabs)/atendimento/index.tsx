@@ -12,7 +12,7 @@ export default function FinanceiroScreen() {
               cachePolicy={"memory-disk"}
               transition={0}
       />
-      <Text>Check-in</Text>
+      <Text>Atendimento</Text>
     </View>
   );
 }

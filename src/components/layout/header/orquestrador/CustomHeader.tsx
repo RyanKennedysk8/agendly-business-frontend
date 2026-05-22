@@ -7,13 +7,11 @@ import { SharedValue } from 'react-native-reanimated';
 import { Colors } from '@colors/color';
 import { 
   BackSimple, 
-  StoreSearchHeader, 
-  DetailSearchHeaderAnimated, 
   SchedulingHeader, 
   EditeProfileHeader, 
   CategoryHeader, 
   HomeHeader, 
-  SearchHeader, 
+  SearchHeaderScreens, 
   ProfileHeader, 
   SubProfile, 
   AuthHeader, 
@@ -42,29 +40,11 @@ export function CustomHeader({ options }: NativeStackHeaderProps) {
   const showReview = (options as any).showReview as boolean;
 
   switch (headerType) {
-    case 'headerStore':
-      if (isSearching) {
-        return (
-          <View style={styles.safeAreaHome}>
-            <StoreSearchHeader {...storeSearchParams} onBack={router.back} />
-          </View>
-        ); 
-      } 
-      return (
-        <View style={styles.absoluteContainer}>
-          {scrollY && storeSearchParams && (
-            <DetailSearchHeaderAnimated
-              onBack={router.back}
-              onSearchPress={onSearchPressCallback}
-              scrollY={scrollY}
-              searchTerm={storeSearchParams.searchTerm}
-              setSearchTerm={storeSearchParams.setSearchTerm}
-              lojaNome={storeSearchParams.lojaNome}
-              onClear={storeSearchParams.onClear}
-              isFavorite={storeSearchParams.isFavorite}
-              onHeartPress={storeSearchParams.onHeartPress}
-            />
-          )}
+
+    case 'home':
+      return(  
+        <View style={[styles.safeAreaHome, { paddingTop: statusBarHeights }]}>
+          <HomeHeader/>
         </View>
       );
 
@@ -75,14 +55,10 @@ export function CustomHeader({ options }: NativeStackHeaderProps) {
         </View>
       ); 
 
-    case 'custom':
-      return (
-        <View style={[styles.safeAreaWhite, { paddingTop: statusBarHeights }]}>
-          <EditeProfileHeader 
-            onBack={router.back} 
-            title={title} 
-            rightComponent={headerRight ? headerRight({ tintColor: Colors.corText }) : undefined}
-          />
+    case 'client': 
+      return(
+        <View style={[styles.safeAreaWhite, { paddingTop: statusBarHeights}]}>
+          <SearchHeaderScreens onBack={router.back} {...searchHeaderParams}/>
         </View>
       );
 
@@ -92,20 +68,6 @@ export function CustomHeader({ options }: NativeStackHeaderProps) {
           <CategoryHeader title={title || "Categoria"} onBack={router.back}/>
         </View>
       );  
-
-    case 'home':
-      return(  
-        <View style={[styles.safeAreaHome, { paddingTop: statusBarHeights }]}>
-          <HomeHeader {...homeHeaderParams} />
-        </View>
-      );
-
-    case 'search': 
-      return(
-        <View style={[styles.safeAreaSearch, { paddingTop: statusBarHeights}]}>
-          <SearchHeader {...searchHeaderParams}/>
-        </View>
-      );
 
     case 'profile':  
       return( 
@@ -139,6 +101,17 @@ export function CustomHeader({ options }: NativeStackHeaderProps) {
       return(
         <View style={[styles.safeAreaWhite, { paddingTop: statusBarHeights }]}>
           <ListHeader />
+        </View>
+      );
+
+    case 'custom':
+      return (
+        <View style={[styles.safeAreaWhite, { paddingTop: statusBarHeights }]}>
+          <EditeProfileHeader 
+            onBack={router.back} 
+            title={title} 
+            rightComponent={headerRight ? headerRight({ tintColor: Colors.corText }) : undefined}
+          />
         </View>
       );
 
