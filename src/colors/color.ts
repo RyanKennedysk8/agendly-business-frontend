@@ -8,6 +8,8 @@ export type ColorPalette = {
     corButtonOff:string;
     corText: string;
     corTextSecondary:string,
+    corTextLight:string,
+    corTextStrong:string,
     transparente:string;
     semiTransparente:string;
     placeholder: string;
@@ -35,18 +37,20 @@ export type ColorPalette = {
     corContainer:"#efefef",
     
     corButton: '#E86A00',
-    corButtonDisable: 'rgba(255, 154, 60, 0.5)',
+    corButtonDisable: '#FFF7ED',
     corButtonOff:'#cccccc',
   
     corText: '#262626',
     corTextSecondary:"rgba(38,38,38,0.7)",
+    corTextLight:'#64748B',
+    corTextStrong:'#475569',
   
     transparente:"#00000000",
     semiTransparente:"rgba(0,0,0,0.6)",
   
-    placeholder: '#838383',
+    placeholder: "#94A3B8",
     gray:"#D3D3D3",
-    border: "#EDEDED", 
+    border: '#F1F5F9', 
     
     success: '#28A745',
     successDisable: '#E9F5EA',
@@ -62,7 +66,7 @@ export type ColorPalette = {
     yellowNotice:"#FFF8E1",
     red: "#F23C3C",
     pink:"rgba(249, 125, 160, 1)",
-    green:"rgba(58, 135, 54, 1)",
+    green:'#10B981',
     orange:'#E86A00'
   
   } as const; 

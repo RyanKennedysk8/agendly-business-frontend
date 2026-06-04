@@ -55,10 +55,11 @@ export function CustomHeader({ options }: NativeStackHeaderProps) {
         </View>
       ); 
 
-    case 'client': 
+    case 'search': 
       return(
         <View style={[styles.safeAreaWhite, { paddingTop: statusBarHeights}]}>
-          <SearchHeaderScreens onBack={router.back} {...searchHeaderParams}/>
+          <SearchHeaderScreens 
+          onBack={router.back} {...searchHeaderParams}/>
         </View>
       );
 

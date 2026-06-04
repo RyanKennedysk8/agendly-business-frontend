@@ -45,10 +45,8 @@ export default function ServicosScreen() {
 
   const handleEditService = (id: string) => {
     console.log('Editar serviço:', id);
-    // router.push({ pathname: '/(main)/(stack)/editar-servico', params: { id } });
   };
 
-  // 4. Render do Card (Otimizado com useCallback)
   const renderItem = useCallback(({ item }: { item: ServiceDTO }) => {
     return (
       <Pressable 
@@ -86,6 +84,7 @@ export default function ServicosScreen() {
       
       <SearchHeaderScreens
         title="Meus Serviços"
+        placeHolder='Buscar por serviço, categoria...'
         onBack={() => router.back()}
         filtered={filteredServices.length} 
         searchValue={searchText}
@@ -122,110 +121,142 @@ export default function ServicosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: Colors.corContainer
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  listContainer: { 
-    flex: 1, 
-    backgroundColor: Colors.corContainer
-  }, 
-  listContent: { 
+
+  listContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  card: { 
+
+  listContent: {
+    paddingBottom: a(90),
+  },
+
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: l(15),
-    paddingVertical: a(10),
-    marginBottom:a(10),
-    marginHorizontal:l(10),
-    borderRadius:td(12)
+
+    paddingHorizontal: l(20),
+    paddingVertical: a(16),
+
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
-  separator: { 
-    height: 1, 
-    backgroundColor: '#F1F5F9', 
-    marginLeft: l(20) 
+
+  separator: {
+    height: 0,
   },
-  infoContainer: { 
-    flex: 1, 
-    paddingRight: l(16) 
+
+  infoContainer: {
+    flex: 1,
+    paddingRight: l(14),
   },
-  serviceName: { 
-    fontSize: td(16), 
-    fontFamily: fonts?.robotoBold || 'System', 
-    color: '#1E293B', 
-    marginBottom: a(6) 
+
+  serviceName: {
+    fontSize: td(15.5),
+    fontFamily: fonts?.robotoMedium || 'System',
+    color: '#0F172A',
+    marginBottom: a(6),
   },
-  metaRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center' 
+
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: l(8),
   },
+
   categoryBadge: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor:Colors.corButtonDisable,
     paddingHorizontal: l(8),
-    paddingVertical: a(2),
-    borderRadius: td(6),
+    paddingVertical: a(3),
+    borderRadius: td(5),
   },
-  categoryText: { 
-    fontSize: td(12), 
-    fontFamily: fonts?.robotoMedium || 'System', 
-    color: '#475569' 
+
+  categoryText: {
+    fontSize: td(11),
+    fontFamily: fonts?.robotoMedium || 'System',
+    color: Colors.corTextStrong,
   },
-  dotSeparator: { 
-    width: td(4), 
-    height: td(4), 
-    borderRadius: td(2), 
-    backgroundColor: '#CBD5E1', 
-    marginHorizontal: l(8) 
+
+  dotSeparator: {
+    width: td(4),
+    height: td(4),
+    borderRadius: td(2),
+    backgroundColor: '#CBD5E1',
   },
-  durationText: { 
-    fontSize: td(13), 
-    fontFamily: fonts?.robotoMedium || 'System', 
-    color: '#64748B', 
-    marginLeft: l(4) 
+
+  durationText: {
+    fontSize: td(12.5),
+    fontFamily: fonts?.robotoRegular || 'System',
+    color: '#64748B',
+    marginLeft: l(4),
   },
-  priceContainer: { flexDirection: 'row', alignItems: 'center', gap: l(8) },
-  priceText: { 
-    fontSize: td(16), 
-    fontFamily: fonts?.robotoBold || 'System', 
-    color: '#10B981' 
+
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: l(10),
   },
-  emptyContainer: { 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    paddingTop: a(80), 
-    paddingHorizontal: l(40) 
+
+  priceText: {
+    fontSize: td(15),
+    fontFamily: fonts?.robotoMedium || 'System',
+    color: Colors.success,
   },
-  emptyTitle: { 
-    marginTop: a(16), 
-    fontSize: td(16), 
-    fontFamily: fonts?.robotoBold || 'System', 
-    color: '#1E293B' 
+
+  chevronWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
+
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: a(80),
+    paddingHorizontal: l(40),
+  },
+
+  emptyTitle: {
+    marginTop: a(14),
+    fontSize: td(16),
+    fontFamily: fonts?.robotoMedium || 'System',
+    color: '#0F172A',
+  },
+
   emptySubtitle: {
-    marginTop: a(8), 
-    fontSize: td(14), 
-    fontFamily: fonts?.robotoRegular || 'System', 
-    color: '#64748B', 
-    textAlign: 'center', 
-    lineHeight: td(20) 
+    marginTop: a(8),
+    fontSize: td(13),
+    fontFamily: fonts?.robotoRegular || 'System',
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: td(20),
   },
-  fab: { 
-    position: 'absolute', 
-    bottom: a(24), 
-    right: l(20), 
-    width: td(56), 
-    height: td(56), 
-    borderRadius: td(28), 
+
+  fab: {
+    position: 'absolute',
+    bottom: a(24),
+    right: l(20),
+
+    width: td(54),
+    height: td(54),
+    borderRadius: td(27),
+
     backgroundColor: '#FF7A00',
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    shadowColor: '#FF7A00', 
-    shadowOffset: { width: 0, height: 4 }, 
-    shadowOpacity: 0.3, 
-    shadowRadius: 8, 
-    elevation: 5 
+
+    justifyContent: 'center',
+    alignItems: 'center',
+
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+
+    elevation: 4,
   },
 });

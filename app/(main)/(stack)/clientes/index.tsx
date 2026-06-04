@@ -45,29 +45,48 @@ export default function ClientesScreen() {
   const handleEditCustomer = (id: string) => {
     console.log('Navegar para o perfil do cliente:', id);
   };
-  const renderItem = useCallback(({ item }: { item: ClientsDTO }) => {
-    const initials = item.name.substring(0, 2).toUpperCase();
 
+  const renderItem = useCallback(({ item }: { item: ClientsDTO }) => {
+    const initials = item.name
+      .split(' ')
+      .slice(0, 2)
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  
     return (
-      <Pressable 
+      <Pressable
         style={styles.card}
         onPress={() => handleEditCustomer(item.id)}
       >
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials}</Text>
         </View>
-
+  
         <View style={styles.infoContainer}>
-          <Text style={styles.customerName} numberOfLines={1}>{item.name}</Text>
-          <Text style={styles.customerPhone}>{item.phone}</Text>
+          <Text style={styles.customerName} numberOfLines={1}>
+            {item.name}
+          </Text>
+  
+          <Text style={styles.customerPhone}>
+            {item.phone}
+          </Text>
         </View>
-
+  
         <View style={styles.metaContainer}>
           <Text style={styles.metaLabel}>Última visita</Text>
-          <Text style={styles.metaValue}>{item.lastVisit || 'Nunca'}</Text>
+          <Text style={styles.metaValue}>
+            {item.lastVisit || 'Nunca'}
+          </Text>
         </View>
-
-        <Ionicons name="chevron-forward" size={td(18)} color="#CBD5E1" />
+  
+        <View style={styles.chevronWrapper}>
+          <Ionicons
+            name="chevron-forward"
+            size={td(16)}
+            color="#CBD5E1"
+          />
+        </View>
       </Pressable>
     );
   }, []);
@@ -84,6 +103,7 @@ export default function ClientesScreen() {
 
       <SearchHeaderScreens
         title="Meus Clientes"
+        placeHolder='Buscar por nome ou telefone...'
         onBack={() => router.back()}
         filtered={filteredClients.length}
         searchValue={searchText}
@@ -120,129 +140,101 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: l(20),
-    paddingBottom: a(16),
-  },
-  headerTitle: {
-    fontSize: td(24),
-    fontFamily: fonts?.robotoBold || 'System',
-    color: '#0F172A',
-    marginRight: l(8),
-  },
-  badge: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: l(8),
-    paddingVertical: a(2),
-    borderRadius: td(12),
-  },
-  badgeText: {
-    fontSize: td(12),
-    fontFamily: fonts?.robotoBold || 'System',
-    color: '#64748B',
-  },
- 
   listContainer: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
+    flex: 1
   },
   listContent: {
-    paddingBottom: a(100), 
+    paddingBottom: a(100),
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: l(20),
-    paddingVertical: a(16),
+    paddingVertical: a(15),
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   separator: {
-    height: 1,
-    backgroundColor: '#F1F5F9',
-    marginLeft: l(76), 
+    height: 0,
   },
   avatar: {
-    width: td(44),
-    height: td(44),
-    borderRadius: td(22),
-    backgroundColor: '#FF7A0015',
+    width: td(42),
+    height: td(42),
+    borderRadius: td(21),
+    backgroundColor: Colors.corButtonDisable,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: l(12),
+
+    marginRight: l(14),
   },
+
   avatarText: {
-    fontSize: td(16),
-    fontFamily: fonts?.robotoBold || 'System',
+    fontSize: td(14),
+    fontFamily: fonts?.robotoMedium,
     color: Colors.corButton,
   },
+
   infoContainer: {
     flex: 1,
     justifyContent: 'center',
+    paddingRight: l(12),
   },
+
   customerName: {
-    fontSize: td(16),
-    fontFamily: fonts?.robotoBold || 'System',
-    color: '#1E293B',
-    marginBottom: a(2),
+    fontSize: td(15),
+    fontFamily: fonts?.robotoMedium,
+    color: Colors.corText,
+    marginBottom: a(4),
   },
+
   customerPhone: {
     fontSize: td(13),
-    fontFamily: fonts?.robotoRegular || 'System',
-    color: '#64748B',
+    fontFamily: fonts?.robotoRegular,
+    color: Colors.corTextLight,
   },
+
   metaContainer: {
     alignItems: 'flex-end',
-    justifyContent: 'center',
     marginRight: l(12),
+    minWidth: l(72),
   },
+
   metaLabel: {
     fontSize: td(11),
-    fontFamily: fonts?.robotoMedium || 'System',
-    color: '#94A3B8',
+    fontFamily: fonts?.robotoRegular,
+    color: Colors.corTextLight,
     marginBottom: a(2),
   },
+
   metaValue: {
-    fontSize: td(12),
-    fontFamily: fonts?.robotoBold || 'System',
-    color: '#475569',
+    fontSize: td(12.5),
+    fontFamily: fonts?.robotoMedium,
+    color: Colors.corTextStrong,
   },
-  emptyContainer: {
-    alignItems: 'center',
+
+  chevronWrapper: {
     justifyContent: 'center',
-    paddingTop: a(80),
-    paddingHorizontal: l(40),
+    alignItems: 'center',
   },
-  emptyTitle: {
-    marginTop: a(16),
-    fontSize: td(16),
-    fontFamily: fonts?.robotoBold || 'System',
-    color: '#1E293B',
-  },
-  emptySubtitle: {
-    marginTop: a(8),
-    fontSize: td(14),
-    fontFamily: fonts?.robotoRegular || 'System',
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: td(20),
-  },
+
   fab: {
     position: 'absolute',
     bottom: a(24),
     right: l(20),
-    width: td(56),
-    height: td(56),
-    borderRadius: td(28),
-    backgroundColor: '#FF7A00', // Sua cor de marca primária
+    width: td(54),
+    height: td(54),
+    borderRadius: td(27),
+
+    backgroundColor: Colors.corButton,
+
     justifyContent: 'center',
     alignItems: 'center',
-    // Sombra leve nativa (único lugar da tela que justifica o custo de processamento de sombra)
-    shadowColor: '#FF7A00',
+
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.12,
     shadowRadius: 8,
-    elevation: 5,
+
+    elevation: 4,
   },
 });

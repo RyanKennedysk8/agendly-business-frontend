@@ -1,66 +1,55 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
-import { DesktopAgenda } from '@/components/features/agendamentos/DesktopAgenda';
-import { MobileAgenda } from '@components/features/agendamentos/MobileAgenda';
-import { AppointmentResponseDTO, EmployeeSummaryDTO } from '@type/appointments';
-import { MOCK_APPOINTMENTS, MOCK_STAFF } from '@/mocks/appointments';
-import { Stack } from 'expo-router';
+import { View, ActivityIndicator } from 'react-native';
 
+// 1. Importação dos seus componentes de UI (Onde a mágica acontece)
+import { CalendarPager } from '@/components/calendar/CalendarPager';
+
+// 3. Hooks de layout (para saber se é Mobile ou Desktop)
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { AppointmentDetail } from '@/types/appointments';
+import { mockAppointments } from '@/mocks/mockAppointments';
+import { MOCK_STAFF } from '@/mocks/appointments';
 
 export default function AgendamentoScreen() {
-  const { isDesktop } = useResponsiveLayout();
-  const [isLoading, setIsLoading] = useState(true);
-  const [appointments, setAppointments] = useState<AppointmentResponseDTO[]>([]);
-  const [staffList, setStaffList] = useState<EmployeeSummaryDTO[]>([]);
+    const { isDesktop } = useResponsiveLayout();
+    const [isLoading, setIsLoading] = useState(true);
+    
+    // Estado que vai segurar os dados (hoje do mock, amanhã da API)
+    const [appointments, setAppointments] = useState<AppointmentDetail[]>([]);
+    const [staffList, setStaffList] = useState<any[]>([]);
 
-  useEffect(() => {
-    const fetchAgenda = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setAppointments(MOCK_APPOINTMENTS);
-      setStaffList(MOCK_STAFF);
-      setIsLoading(false);
-    };
-    fetchAgenda();
-  }, []);
+    useEffect(() => {
+        // Simulando uma chamada de API com 800ms de delay
+        const loadData = async () => {
+            setIsLoading(true);
+            try {
+                // Simula o "await api.get()"
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                setAppointments(mockAppointments);
+                setStaffList(MOCK_STAFF);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-  if (isLoading) {
+        loadData();
+    }, []);
+
+    if (isLoading) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#FF7A00" />
+            </View>
+        );
+    }
+
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2E7D32" />
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
-
-      {isDesktop ? (
-        <DesktopAgenda appointments={appointments} staffList={staffList} />
-      ) : (
-        <View style={{flex:1}}>
-          <Stack.Screen 
-            options={{
-              headerType:"custom",
-              
-            }as any}
-          />
-          <MobileAgenda appointments={appointments} staffList={staffList} />
+        <View style={{ flex: 1, backgroundColor: '#FFF' }}>
+                <CalendarPager 
+                    appointments={appointments} 
+                    staffList={staffList} 
+                />
         </View>
-      )}
-    </View>
-  );
+    );
 }
-
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#FFFFFF' 
-  },
-  loadingContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: '#F8FAFC' 
-  },
-});

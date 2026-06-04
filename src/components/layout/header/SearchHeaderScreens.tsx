@@ -3,13 +3,13 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import { a, l, td } from '@/constants/responsive';
 import { Colors } from '@/colors/color';
 import { fonts } from '@/assets/fonts/fonts';
 
 type HeaderScreensProps = {
   title: string;
+  placeHolder: string;
   onBack: () => void;
   filtered: number;
   searchValue: string;
@@ -18,6 +18,7 @@ type HeaderScreensProps = {
 
 export const SearchHeaderScreens = ({
   title,
+  placeHolder,
   onBack, 
   filtered,
   searchValue,
@@ -44,20 +45,32 @@ export const SearchHeaderScreens = ({
 
       <View style={styles.searchRow}>
         <View style={styles.searchInputWrapper}>
-          <Ionicons name="search" size={td(18)} color={Colors.corScreen} />
+          <Ionicons
+            name="search"
+            size={td(17)}
+            color={Colors.placeholder}
+          />
+
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar por nome ou telefone..."
+            placeholder={placeHolder}
             placeholderTextColor={Colors.placeholder}
             value={searchValue}
             onChangeText={onSearchChange}
             autoCorrect={false}
-            keyboardType="default"
-            clearButtonMode="while-editing" // Nativo iOS
+            clearButtonMode="while-editing"
           />
-          { searchValue.length > 0 && (
-            <TouchableOpacity onPress={() => onSearchChange('')} hitSlop={10}>
-              <Ionicons name="close-circle" size={td(18)} color={Colors.placeholder} />
+
+          {searchValue.length > 0 && (
+            <TouchableOpacity
+              onPress={() => onSearchChange('')}
+              hitSlop={10}
+            >
+              <Ionicons
+                name="close-circle"
+                size={td(18)}
+                color="#CBD5E1"
+              />
             </TouchableOpacity>
           )}
         </View>
@@ -71,8 +84,7 @@ const styles = StyleSheet.create({
   headerWrapper: {
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    zIndex: 10,
+    borderBottomColor: Colors.border
   },
   topRow: {
     flexDirection: 'row',
@@ -106,7 +118,7 @@ const styles = StyleSheet.create({
     height: td(28),
     paddingHorizontal: td(8),
     borderRadius: td(14),
-    backgroundColor: '#FF7A0015', 
+    backgroundColor: Colors.corButtonDisable, 
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
@@ -114,27 +126,29 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: td(14),
     fontFamily: fonts?.robotoBold || 'System',
-    color: '#FF7A00',
+    color: Colors.corButton,
   },
   searchRow: {
     paddingHorizontal: l(20),
-    paddingBottom: a(10),
-    paddingTop: a(4),
   },
+
   searchInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.corContainer,
-    borderRadius: td(12),
-    paddingHorizontal: l(10),
     height: a(40),
+    backgroundColor: '#F8FAFC',
+    borderRadius: td(10),
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    paddingHorizontal: l(12),
+    marginBottom:a(10)
   },
+
   searchInput: {
     flex: 1,
-    height: '100%',
     marginLeft: l(8),
-    fontSize: td(15),
+    fontSize: td(14),
     fontFamily: fonts?.robotoRegular || 'System',
-    color: Colors.placeholder,
+    color: '#0F172A',
   },
 });

@@ -1,4 +1,3 @@
-export type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELED' | 'NO_SHOW';
 
 export interface UserSummaryDTO {
   id: string;
@@ -33,3 +32,42 @@ export interface AppointmentResponseDTO {
   priceAtBooking: number;
   notes: string | null;
 };
+
+export enum AppointmentStatus {
+  PENDING_CONFIRMATION = 'PENDING_CONFIRMATION',
+  CONFIRMED = 'CONFIRMED',
+  AWAITING_COMPLETION = 'AWAITING_COMPLETION',
+  CANCELLED_BY_CLIENT = 'CANCELLED_BY_CLIENT',
+  CANCELLED_BY_COMPANY = 'CANCELLED_BY_COMPANY',
+  COMPLETED = 'COMPLETED',
+  NO_SHOW = 'NO_SHOW',
+};
+
+// Interface correspondente ao AppointmentDetailDTO do backend
+export interface AppointmentDetail { 
+appointmentId: string;
+startTime: string; 
+endTime: string; 
+status: AppointmentStatus;
+canReview: boolean;
+priceAtBooking: number; 
+createdAt:string;  
+notes?:string;
+// Detalhes do serviço
+serviceId: string; 
+serviceName: string;
+serviceDuration: number;
+ 
+// Detalhes da Empresa
+companyId: string; 
+companyName: string;
+companyLogoUrl?: string; 
+companyAddress?: string; 
+companyLatitude?:number | null;
+companyLongitude?:number | null;
+
+// Detalhes do Funcionário 
+employeeId?: string;
+employeeName?: string;
+employeePhotoUrl?: string; 
+}
