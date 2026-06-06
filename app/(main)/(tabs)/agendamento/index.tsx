@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, StatusBar } from 'react-native';
 
 // 1. Importação dos seus componentes de UI (Onde a mágica acontece)
 import { CalendarPager } from '@/components/calendar/CalendarPager';
@@ -46,10 +46,11 @@ export default function AgendamentoScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: '#FFF' }}>
-                <CalendarPager 
-                    appointments={appointments} 
-                    staffList={staffList} 
-                />
+          <StatusBar barStyle={'light-content'}/>
+          <CalendarPager 
+            appointments={appointments} 
+            staffList={staffList} 
+          />
         </View>
     );
 }

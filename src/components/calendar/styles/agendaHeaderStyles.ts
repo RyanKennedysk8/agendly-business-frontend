@@ -16,24 +16,24 @@ export const agendaHeaderStyles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
     },
     topRow: {
-        
         alignItems: 'center',
-        paddingHorizontal: l(16),
-        height: a(50),
-        justifyContent: 'space-between',
+        flexDirection:"row",
+        justifyContent:"space-between",
+        paddingHorizontal: l(10),
+        paddingVertical:a(5),
+        backgroundColor:Colors.corButton
     },
     monthSelector: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor:Colors.corButton,
-        borderRadius:td(12),
-        padding:td(5)
+        justifyContent:"center",
+        gap:l(2)
     },
     monthText: {
-        fontSize: td(14),
+        fontSize: td(18),
         fontFamily:fonts.robotoBold,
         color: Colors.white,
-        textTransform: 'capitalize',
+        textTransform: 'capitalize'
     },
     tabsContainer: {
         flexDirection: 'row',
@@ -71,12 +71,58 @@ export const agendaHeaderStyles = StyleSheet.create({
     },
     columnDayName: {
         fontSize: td(10),
-        color: '#6B7280',
+        color: Colors.corTextLight,
+        fontFamily:fonts.robotoMedium,
         textTransform: 'uppercase',
     },
     columnDayNumber: {
         fontSize: td(14),
-        fontWeight: 'bold',
+        fontFamily:fonts.robotoMedium,
+        color: Colors.corTextLight,
+    },
+    daysAxisContainer: {
+        flexDirection: 'row',
+    },
+    timeAxisSpacer: {
+        width: l(60), // Exatamente a mesma largura do TimeAxis no DailyViewBase
+    },
+    columnsWrapper: {
+        flex: 1,
+        flexDirection: 'row',
+    },
+    dayColumnHeader: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: a(4),
+    },
+    dayOfWeekText: {
+        fontSize: td(11),
+        fontWeight: '600',
+        color: '#6B7280',
+        textTransform: 'uppercase',
+        marginBottom: a(4),
+    },
+    dateCircle: {
+        width: l(28),
+        height: l(28),
+        borderRadius: td(14),
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dateCircleActive: {
+        backgroundColor: '#FF7A00',
+    },
+    dayOfMonthText: {
+        fontSize: td(16),
+        fontWeight: '500',
         color: '#111827',
+    },
+    todayText: {
+        color: '#FF7A00',
+    },
+    todayTextCircle: {
+        color: '#FFFFFF',
+        fontWeight: 'bold',
     }
 });

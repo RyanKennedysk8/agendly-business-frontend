@@ -9,6 +9,7 @@ import { getGlobalWorkBounds } from '../../utils/workTimeEngine';
 import { AppointmentDetail } from '@/types/appointments';
 import { processDayAppointments } from '@/utils/overLapEngine';
 import { calendarBaseStyles } from './styles/calendarBaseStyles';
+import { a } from '@/constants/responsive';
 
 interface DailyViewBaseProps {
     visibleDays: Date[];
@@ -66,18 +67,18 @@ export const DailyViewBase = ({ visibleDays = [], appointments = [] }: DailyView
 
     return (
         <View style={calendarBaseStyles.gridContainer}>
-            <ScrollView 
+            <ScrollView
                 ref={scrollRef}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={calendarBaseStyles.scrollContent}
+                contentContainerStyle={[
+                    calendarBaseStyles.scrollContent
+                ]}
             >
                 <TimeAxis />
-                
                 <View style={calendarBaseStyles.gridContainer}>
                     <View style={calendarBaseStyles.columnsWrapper}>
                         {columnsData.map((column) => (
                             <View key={column.dateKey} style={calendarBaseStyles.dayColumn}>
-                                {/* Renderiza o grid de fundo e áreas cinzas POR COLUNA */}
                                 <TimeGrid date={column.date} />
                                 
                                 {/* Renderiza os agendamentos por cima */}

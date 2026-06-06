@@ -109,6 +109,9 @@ export const CalendarPager = ({ appointments = [], staffList = [] }: CalendarPag
     const handleOpenMonthPicker = () => setIsMonthPickerVisible(true);
     const handleCloseMonthPicker = () => setIsMonthPickerVisible(false);
 
+    const handleHeaderDayPress = (date: Date) => {
+        changeViewMode('DAY', date);
+    };
     return (
         <View style={styles.container}>
             <AgendaHeader 
@@ -116,7 +119,8 @@ export const CalendarPager = ({ appointments = [], staffList = [] }: CalendarPag
                 viewMode={viewMode}
                 onChangeViewMode={changeViewMode}
                 visibleDays={visibleDays}
-                onOpenMonthPicker={handleOpenMonthPicker} // Vinculado ao clique do texto de mês
+                onOpenMonthPicker={handleOpenMonthPicker} 
+                onDayPress={handleHeaderDayPress}
             />
 
             {viewMode === 'MONTH' ? (
@@ -163,7 +167,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
     },
     pager: {
-        flex: 1,
+        flex: 1
     },
     pageWrapper: {
         flex: 1,

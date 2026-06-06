@@ -6,15 +6,20 @@ export const useAgendaNavigation = (initialDate: Date = new Date()) => {
     const [selectedDate, setSelectedDate] = useState<Date>(initialDate);
     const [viewMode, setViewMode] = useState<ViewMode>('DAY');
 
-    // Âncora virtual para o PagerView
     const VIRTUAL_ANCHOR = 5000;
 
-    const changeViewMode = useCallback((mode: ViewMode) => {
+    // Adicionado parâmetro opcional 'targetDate'
+    const changeViewMode = useCallback((mode: ViewMode, targetDate?: Date) => {
         setViewMode(mode);
-        setSelectedDate(new Date()); // Faz reset para o dia atual ao mudar de visão
+        // Se o evento enviou uma data específica (clique no header), vá para ela.
+        // Se não enviou nada (clique na Tab), reseta para o dia de "Hoje".
+        if (targetDate) {
+            setSelectedDate(targetDate);
+        } else {
+            setSelectedDate(new Date()); 
+        }
     }, []);
 
-    // Calcula os dias que preenchem as colunas do ecrã atual
     const visibleDays = useMemo(() => {
         const days: Date[] = [];
         const base = new Date(selectedDate);
@@ -42,10 +47,9 @@ export const useAgendaNavigation = (initialDate: Date = new Date()) => {
         return days;
     }, [selectedDate, viewMode]);
 
-    // Função que traduz o deslize do ecrã em cálculo matemático de data
     const navigateByPageOffset = useCallback((pageIndex: number) => {
         const offset = pageIndex - VIRTUAL_ANCHOR;
-        const newDate = new Date(); // Base fixa ancorada no "Hoje"
+        const newDate = new Date(); 
         newDate.setHours(0, 0, 0, 0);
 
         switch (viewMode) {

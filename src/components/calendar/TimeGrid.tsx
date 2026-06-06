@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { generateTimeSlots, HOUR_HEIGHT, MINUTE_HEIGHT } from '../../utils/calendarMetrics';
 import { calendarBaseStyles } from './styles/calendarBaseStyles';
 import { getGlobalWorkBounds, isSlotClosed } from '@/utils/workTimeEngine';
+import { Colors } from '@/colors/color';
 
 export const TimeGrid = memo(({ date }: { date: Date }) => {
     const { startHour, endHour } = getGlobalWorkBounds();
@@ -20,7 +21,7 @@ export const TimeGrid = memo(({ date }: { date: Date }) => {
                         {isClosed && (
                             <View style={{
                                 height: 30 * MINUTE_HEIGHT,
-                                backgroundColor: '#F3F4F6', // Cinza claro profissional
+                                backgroundColor: Colors.corContainer, // Cinza claro profissional
                                 width: '100%'
                             }} />
                         )}
