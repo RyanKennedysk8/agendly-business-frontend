@@ -5,6 +5,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { computeAppointmentsCache, generateMonthMatrix } from '../../utils/monthEngine';
 import { monthViewStyles } from './styles/monthViewStyles';
 import { getEmployeeColor } from './styles/colorMapper';
+import { a } from '@/constants/responsive';
 
 interface MonthViewProps {
     selectedDate: Date;
@@ -14,15 +15,25 @@ interface MonthViewProps {
 
 const WEEK_DAYS_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
+const ITEM_HEIGHT = a(75);
+
+
+
 export const MonthView = ({ selectedDate, setSelectedDate, appointments = [] }: MonthViewProps) => {
     
-    // 1. Memoriza a matriz matemática do mês atual
+    //  Memoriza a matriz matemática do mês atual
     const monthMatrix = useMemo(() => generateMonthMatrix(selectedDate), [selectedDate]);
 
-    // 2. Memoriza o mapa hash de agendamentos por chave YYYY-MM-DD para busca O(1)
+    //  Memoriza o mapa hash de agendamentos por chave YYYY-MM-DD para busca O(1)
     const appointmentsCache = useMemo(() => computeAppointmentsCache(appointments), [appointments]);
 
-    // 3. Filtra de forma linear apenas os registros pertencentes ao dia selecionado pelo gestor
+    const getItemLayout = (data: any, index: number) => ({
+        length: ITEM_HEIGHT,
+        offset: ITEM_HEIGHT * index,
+        index,
+    });
+
+    //  Filtra de forma linear apenas os registros pertencentes ao dia selecionado pelo gestor
     const selectedDayAppointments = useMemo(() => {
         const targetKey = selectedDate.toISOString().split('T')[0];
         return appointments.filter(appt => appt.startTime && appt.startTime.startsWith(targetKey))
@@ -95,10 +106,11 @@ export const MonthView = ({ selectedDate, setSelectedDate, appointments = [] }: 
             {/* Metade Inferior: Listagem Otimizada Nativa */}
             <FlashList
                 data={selectedDayAppointments}
-                keyExtractor={(item) => item.appointmentId}
+                keyExtractor={(item, index) => `${item.appointmentId}-${item.startTime}-${index}`}
                 renderItem={renderAppointmentItem}
                 style={monthViewStyles.listSection}
                 showsVerticalScrollIndicator={false}
+
                 ListEmptyComponent={
                     <View style={monthViewStyles.listEmptyContainer}>
                         <Text style={monthViewStyles.listEmptyText}>Nenhum agendamento para este dia.</Text>

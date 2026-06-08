@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { ViewMode } from '../../hooks/useAgendaNavigation';
 import { agendaHeaderStyles } from './styles/agendaHeaderStyles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/colors/color';
-import { td } from '@/constants/responsive';
+import { a, l, td } from '@/constants/responsive';
 import { fonts } from '@/assets/fonts/fonts';
 
 interface AgendaHeaderProps {
@@ -43,6 +43,21 @@ export const AgendaHeader = ({
     // Pega o nome do mês e ano atual para o canto esquerdo (ex: "Outubro 2026")
     const monthYear = selectedDate.toLocaleDateString('pt-BR', { month: 'long'});
     const insets = useSafeAreaInsets();
+
+    const isTodayVisible = useMemo(() => {
+        const today = new Date();
+        
+        if (viewMode === 'MONTH') {
+            // No modo mês, verificamos se estamos no mês e ano atuais
+            return selectedDate.getMonth() === today.getMonth() && 
+                   selectedDate.getFullYear() === today.getFullYear();
+        }
+        
+        // Nos modos Dia, 3 Dias ou Semana, verificamos se o array de dias visíveis contém o dia de hoje
+        return visibleDays.some(day => day.toDateString() === today.toDateString());
+    }, [visibleDays, selectedDate, viewMode]);
+
+
     return (
         <View style={[agendaHeaderStyles.container]}>
             <View style={[agendaHeaderStyles.topRow, {paddingTop:insets.top}]}>
@@ -79,7 +94,25 @@ export const AgendaHeader = ({
             {viewMode !== 'MONTH' && (
                 <View style={agendaHeaderStyles.daysAxisContainer}>
                     {/* Espaçador para alinhar com a régua de horas (TimeAxis) de width fixo */}
-                    <View style={agendaHeaderStyles.timeAxisSpacer} />
+                    <View style={agendaHeaderStyles.timeAxisSpacer} >
+                        {!isTodayVisible && (
+                            <TouchableOpacity 
+                                activeOpacity={0.6}
+                                onPress={() => onChangeViewMode(viewMode, new Date())} 
+                                style={{
+                                    paddingHorizontal: l(7),
+                                    paddingVertical: a(5),
+                                    borderRadius: td(8),
+                                    borderWidth:1,
+                                    borderColor:Colors.corButton
+                                }}
+                            >
+                                <Text style={{ color: Colors.corButton,fontFamily:fonts.robotoBold, fontSize: td(12) }}>
+                                    Hoje
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
                     
                     <View style={agendaHeaderStyles.columnsWrapper}>
                         {visibleDays.map((day, index) => {

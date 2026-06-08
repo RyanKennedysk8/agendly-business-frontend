@@ -8,7 +8,7 @@ import { MINUTE_HEIGHT } from '../../utils/calendarMetrics';
 import { getGlobalWorkBounds } from '../../utils/workTimeEngine';
 import { AppointmentDetail } from '@/types/appointments';
 import { processDayAppointments } from '@/utils/overLapEngine';
-import { calendarBaseStyles } from './styles/calendarBaseStyles';
+import { calendarBaseStyles, TOP_PADDING_MINUTES } from './styles/calendarBaseStyles';
 import { a } from '@/constants/responsive';
 
 interface DailyViewBaseProps {
@@ -53,7 +53,10 @@ export const DailyViewBase = ({ visibleDays = [], appointments = [] }: DailyView
                 ...appt,
                 layout: {
                     ...appt.layout,
-                    top: appt.layout.top - (startOffsetMinutes * MINUTE_HEIGHT)
+                    top: appt.layout.top -
+                        (startOffsetMinutes * MINUTE_HEIGHT)
+                        +
+                        (TOP_PADDING_MINUTES * MINUTE_HEIGHT)
                 }
             }));
 
@@ -73,6 +76,8 @@ export const DailyViewBase = ({ visibleDays = [], appointments = [] }: DailyView
                 contentContainerStyle={[
                     calendarBaseStyles.scrollContent
                 ]}
+                 overScrollMode="never"
+                 bounces={false}
             >
                 <TimeAxis />
                 <View style={calendarBaseStyles.gridContainer}>

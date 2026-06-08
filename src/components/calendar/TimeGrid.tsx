@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { View } from 'react-native';
 import { generateTimeSlots, HOUR_HEIGHT, MINUTE_HEIGHT } from '../../utils/calendarMetrics';
-import { calendarBaseStyles } from './styles/calendarBaseStyles';
+import { calendarBaseStyles, TOP_PADDING_MINUTES } from './styles/calendarBaseStyles';
 import { getGlobalWorkBounds, isSlotClosed } from '@/utils/workTimeEngine';
 import { Colors } from '@/colors/color';
 
@@ -13,7 +13,7 @@ export const TimeGrid = memo(({ date }: { date: Date }) => {
         <View style={calendarBaseStyles.absoluteGridLines}>
             {slots.map((time, index) => {
                 const isClosed = isSlotClosed(date, time);
-                const top = (index * 30) * MINUTE_HEIGHT;
+                const top =((index * 30) + TOP_PADDING_MINUTES) * MINUTE_HEIGHT;
 
                 return (
                     <View key={`grid-${index}`} style={{ position: 'absolute', top, left: 0, right: 0 }}>

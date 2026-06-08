@@ -11,12 +11,11 @@ export const useAgendaNavigation = (initialDate: Date = new Date()) => {
     // Adicionado parâmetro opcional 'targetDate'
     const changeViewMode = useCallback((mode: ViewMode, targetDate?: Date) => {
         setViewMode(mode);
-        // Se o evento enviou uma data específica (clique no header), vá para ela.
-        // Se não enviou nada (clique na Tab), reseta para o dia de "Hoje".
+        
+        // Se recebeu uma data alvo (ex: clicou em um dia específico ou no botão 'Hoje'), vai para ela.
+        // Se não recebeu (ex: apenas clicou na Tab), NÃO faz nada com a selectedDate. Contexto mantido!
         if (targetDate) {
             setSelectedDate(targetDate);
-        } else {
-            setSelectedDate(new Date()); 
         }
     }, []);
 

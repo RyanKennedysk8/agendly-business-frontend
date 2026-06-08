@@ -36,11 +36,11 @@ export type ColorPalette = {
   
     corContainer:"#efefef",
     
-    corButton: '#E86A00',
+    corButton: '#FF7A00',
     corButtonDisable: '#FFF7ED',
     corButtonOff:'#cccccc',
   
-    corText: '#262626',
+    corText: '#262626', 
     corTextSecondary:"rgba(38,38,38,0.7)",
     corTextLight:'#64748B',
     corTextStrong:'#475569',

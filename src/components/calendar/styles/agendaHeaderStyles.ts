@@ -9,11 +9,7 @@ export const agendaHeaderStyles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#E5E7EB',
         zIndex: 10,
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        shadowOffset: { width: 0, height: 2 },
+      
     },
     topRow: {
         alignItems: 'center',
@@ -84,7 +80,12 @@ export const agendaHeaderStyles = StyleSheet.create({
         flexDirection: 'row',
     },
     timeAxisSpacer: {
-        width: l(60), // Exatamente a mesma largura do TimeAxis no DailyViewBase
+        width: l(60),
+        justifyContent:"center",
+        alignItems:"center",
+        borderRightWidth:1,
+        borderColor:Colors.gray
+        
     },
     columnsWrapper: {
         flex: 1,

@@ -1,72 +1,74 @@
+import { fonts } from '@/assets/fonts/fonts';
+import { Colors } from '@/colors/color';
 import { a, l, td } from '@/constants/responsive';
 import { StyleSheet } from 'react-native';
 
 export const monthViewStyles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: Colors.white,
     },
-    // Região do Calendário (Metade Superior)
     calendarSection: {
         paddingHorizontal: l(8),
-        paddingBottom: a(12),
         borderBottomWidth: 1,
         borderBottomColor: '#E5E7EB',
-        backgroundColor: '#FAFAFA',
+        backgroundColor: Colors.corButton,
+        borderBottomRightRadius:td(15),
+        borderBottomLeftRadius:td(15)
     },
     weekDaysRow: {
         flexDirection: 'row',
-        marginBottom: a(6),
+        marginTop: a(5),
     },
     weekDayLabel: {
         flex: 1,
         textAlign: 'center',
-        fontSize: td(11),
-        fontWeight: '600',
-        color: '#9CA3AF',
-        textTransform: 'uppercase',
+        fontSize: td(10),
+        fontFamily:fonts.robotoRegular,
+        color: Colors.white,
     },
     gridWrapper: {
         flexDirection: 'row',
         flexWrap: 'wrap', // Força a quebra automática a cada 7 itens
     },
     cellContainer: {
+        height: td(40),
         width: '14.2857%', // Garante exatamente 7 colunas por linha
         aspectRatio: 1.1, // Células levemente retangulares para ergonomia tátil
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
-        marginVertical: a(2),
     },
     cellDayText: {
-        fontSize: td(14),
-        fontWeight: '500',
-        color: '#111827',
+        fontSize: td(15),
+        fontFamily:fonts.robotoMedium,
+        color: Colors.white,
     },
     cellDayOutside: {
-        color: '#D1D5DB', // Apaga visualmente os dias dos meses adjacentes
+        fontFamily:fonts.robotoRegular,
+        color: Colors.corButtonOff, // Apaga visualmente os dias dos meses adjacentes
     },
     cellSelected: {
-        backgroundColor: '#FF7A00', // Sua cor primária de destaque de seleção
+        backgroundColor: Colors.white, // Sua cor primária de destaque de seleção
         borderRadius: td(20),
-        width: l(28),
-        height: l(28),
+        width: td(40), 
+        height: td(40),
         alignItems: 'center',
         justifyContent: 'center',
     },
     textSelected: {
-        color: '#FFFFFF',
-        fontWeight: 'bold',
+        color: Colors.corButton,
+        fontFamily:fonts.robotoBold,
     },
     // Badge indicador de volume de agendamento
     badgeDot: {
         position: 'absolute',
-        bottom: a(2),
-        backgroundColor: '#3B82F6', // Azul discreto para balancear com o laranja de seleção
-        borderRadius: td(6),
+        bottom: a(1),
+        backgroundColor: Colors.corText,
+        borderRadius: td(10),
         minWidth: l(14),
         height: a(12),
-        alignItems: 'center',
+        alignItems: 'center', 
         justifyContent: 'center',
         paddingHorizontal: l(2),
     },
@@ -78,7 +80,8 @@ export const monthViewStyles = StyleSheet.create({
     // Região da Lista Otimizada (Metade Inferior)
     listSection: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: Colors.white,
+        minHeight: a(200),
     },
     listEmptyContainer: {
         flex: 1,

@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { HOUR_HEIGHT } from '../../../utils/calendarMetrics';
+import { HOUR_HEIGHT, MINUTE_HEIGHT } from '../../../utils/calendarMetrics';
 import { getGlobalWorkBounds } from '../../../utils/workTimeEngine';
 import { a, l, td } from '@/constants/responsive';
 import { Colors } from '@/colors/color';
@@ -7,7 +7,11 @@ import { fonts } from '@/assets/fonts/fonts';
 
 // Executa a leitura dinâmica dos limites baseada no seu COMPANY_MOCK
 const { startHour, endHour } = getGlobalWorkBounds();
-const TOTAL_GRID_HEIGHT = (endHour - startHour) * HOUR_HEIGHT;
+export const TOP_PADDING_MINUTES = 30
+
+const TOTAL_GRID_HEIGHT = (
+    ((endHour - startHour) * 60)
+    + TOP_PADDING_MINUTES ) * MINUTE_HEIGHT;
 
 export const calendarBaseStyles = StyleSheet.create({
     container: {
