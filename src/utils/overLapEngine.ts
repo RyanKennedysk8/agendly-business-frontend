@@ -27,16 +27,21 @@ export function processDayAppointments(appointments: AppointmentDetail[]): Rende
     const clusters: RenderableAppointment[][] = [];
     let currentCluster: RenderableAppointment[] = [];
     let clusterEndTime = 0;
-
-    // 2. Agrupamento de Colisões (Clusters)
+    const EVENT_GAP = 4;
+    
+    // Agrupamento de Colisões (Clusters)
     sorted.forEach(appt => {
         const startDate = new Date(appt.startTime);
         const startMs = startDate.getTime();
         const endMs = new Date(appt.endTime).getTime();
 
         const top = (startDate.getHours() * 60 + startDate.getMinutes()) * MINUTE_HEIGHT;
-        const height = appt.serviceDuration * MINUTE_HEIGHT;
+        const CARD_GAP = 1;
+      
 
+        const height = Math.max( appt.serviceDuration * MINUTE_HEIGHT - CARD_GAP, 10 );
+
+        
         const renderable: RenderableAppointment = {
             ...appt,
             layout: { top, height, left: '0%', width: '100%', zIndex: 1 }
@@ -55,7 +60,7 @@ export function processDayAppointments(appointments: AppointmentDetail[]): Rende
         clusters.push(currentCluster);
     }
 
-    // 3. Distribuição Horizontal (Column Packing)
+    //  Distribuição Horizontal (Column Packing)
     const finalLayout: RenderableAppointment[] = [];
 
     clusters.forEach(cluster => {
@@ -85,11 +90,11 @@ export function processDayAppointments(appointments: AppointmentDetail[]): Rende
 
         const colCount = columns.length;
         const widthPct = 100 / colCount;
-
+        const GAP_PERCENT = 1;
         columns.forEach((col, colIndex) => {
             col.forEach(appt => {
                 // Largura ajustada para 95% para não colar no card ao lado (efeito cascata fluido)
-                appt.layout.width = `${widthPct * 0.95}%`; 
+                appt.layout.width = `${widthPct - GAP_PERCENT}%`;
                 appt.layout.left = `${colIndex * widthPct}%`;
                 appt.layout.zIndex = colIndex + 1; 
                 finalLayout.push(appt);

@@ -30,6 +30,21 @@ const getDayOfWeekAbrev = (date: Date) => {
     return days[date.getDay()];
 };
 
+const getWeekDaysForHeader = (baseDate: Date) => {
+    const days: Date[] = [];
+    const base = new Date(baseDate);
+    base.setHours(0, 0, 0, 0);
+    const dayOfWeek = base.getDay();
+    const startOfWeek = new Date(base);
+    startOfWeek.setDate(base.getDate() - dayOfWeek);
+
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(startOfWeek);
+        d.setDate(startOfWeek.getDate() + i);
+        days.push(d);
+    }
+    return days;
+};
 
 export const AgendaHeader = ({ 
     selectedDate, 
@@ -41,28 +56,29 @@ export const AgendaHeader = ({
 }: AgendaHeaderProps) => {
     
     // Pega o nome do mês e ano atual para o canto esquerdo (ex: "Outubro 2026")
-    const monthYear = selectedDate.toLocaleDateString('pt-BR', { month: 'long'});
+    const month = selectedDate.toLocaleDateString('pt-BR', { month: 'long'});
+    const year = selectedDate.toLocaleDateString('pt-BR', {year: 'numeric'})
     const insets = useSafeAreaInsets();
 
     const isTodayVisible = useMemo(() => {
         const today = new Date();
-        
         if (viewMode === 'MONTH') {
-            // No modo mês, verificamos se estamos no mês e ano atuais
             return selectedDate.getMonth() === today.getMonth() && 
                    selectedDate.getFullYear() === today.getFullYear();
         }
-        
-        // Nos modos Dia, 3 Dias ou Semana, verificamos se o array de dias visíveis contém o dia de hoje
         return visibleDays.some(day => day.toDateString() === today.toDateString());
     }, [visibleDays, selectedDate, viewMode]);
 
-
+    const headerWeekDays = useMemo(() => getWeekDaysForHeader(selectedDate), [selectedDate]);
+    
     return (
         <View style={[agendaHeaderStyles.container]}>
-            <View style={[agendaHeaderStyles.topRow, {paddingTop:insets.top}]}>
+            <View style={[agendaHeaderStyles.topRow, {paddingTop:insets.top + a(10)}]}>
                 <TouchableOpacity onPress={onOpenMonthPicker} style={agendaHeaderStyles.monthSelector}>
-                    <Text style={agendaHeaderStyles.monthText}>{monthYear}</Text>
+                    <View style={{justifyContent:"center", alignItems:"center"}}>
+                        <Text style={agendaHeaderStyles.monthText}>{month}</Text>
+                        <Text style={agendaHeaderStyles.yearText}>{year}</Text>
+                    </View> 
                     <Ionicons name="chevron-down" color={Colors.white} size={td(18)}/>
                 </TouchableOpacity>
 
@@ -90,53 +106,85 @@ export const AgendaHeader = ({
                 </View>
             </View>
 
-            {/* Linha Inferior: Dias da grade (Oculto se for visualização Mensal) */}
             {viewMode !== 'MONTH' && (
                 <View style={agendaHeaderStyles.daysAxisContainer}>
-                    {/* Espaçador para alinhar com a régua de horas (TimeAxis) de width fixo */}
-                    <View style={agendaHeaderStyles.timeAxisSpacer} >
+                    <View style={agendaHeaderStyles.timeAxisSpacer}>
                         {!isTodayVisible && (
-                            <TouchableOpacity 
-                                activeOpacity={0.6}
-                                onPress={() => onChangeViewMode(viewMode, new Date())} 
-                                style={{
-                                    paddingHorizontal: l(7),
-                                    paddingVertical: a(5),
-                                    borderRadius: td(8),
-                                    borderWidth:1,
-                                    borderColor:Colors.corButton
-                                }}
+                            <TouchableOpacity
+                            activeOpacity={0.6}
+                            onPress={() => onChangeViewMode(viewMode, new Date())}
+                            style={{
+                                backgroundColor: Colors.white,
+                                paddingHorizontal: l(8),
+                                paddingVertical: a(4),
+                                borderRadius: td(6),
+                                borderColor:Colors.corButton,
+                                borderWidth:1
+                            }}
                             >
-                                <Text style={{ color: Colors.corButton,fontFamily:fonts.robotoBold, fontSize: td(12) }}>
+                                <Text style={{ color:Colors.corButton, fontFamily:fonts.robotoBold, fontSize: td(12) }}>
                                     Hoje
                                 </Text>
                             </TouchableOpacity>
                         )}
+                            
                     </View>
                     
                     <View style={agendaHeaderStyles.columnsWrapper}>
-                        {visibleDays.map((day, index) => {
+                        {headerWeekDays.map((day, index) => {
                             const isToday = day.toDateString() === new Date().toDateString();
-                            const isClickable = viewMode !== 'DAY'; // Bloqueia toque redundante se já estiver no modo Dia
+                            
+                            // Verifica se o dia atual está ativo na grade
+                            const isActive = visibleDays.some(vd => vd.toDateString() === day.toDateString());
+
+                            // LÓGICA DE CONEXÃO: Verifica se os vizinhos também estão ativos na grade
+                            const prevDay = index > 0 ? headerWeekDays[index - 1] : null;
+                            const nextDay = index < 6 ? headerWeekDays[index + 1] : null;
+
+                            const isPrevActive = prevDay ? visibleDays.some(vd => vd.toDateString() === prevDay.toDateString()) : false;
+                            const isNextActive = nextDay ? visibleDays.some(vd => vd.toDateString() === nextDay.toDateString()) : false;
+
+                            const isLeftConnected = isActive && isPrevActive;
+                            const isRightConnected = isActive && isNextActive;
 
                             return (
                                 <TouchableOpacity 
                                     key={index} 
                                     style={agendaHeaderStyles.dayColumnHeader}
-                                    activeOpacity={isClickable ? 0.6 : 1}
+                                    activeOpacity={0.6}
                                     onPress={() => {
-                                        if (isClickable && onDayPress) {
-                                            onDayPress(day);
-                                        }
+                                        if (onDayPress) onDayPress(day);
                                     }}
                                 >
-                                    <Text style={[agendaHeaderStyles.dayOfWeekText, isToday && agendaHeaderStyles.todayText]}>
+                                    <Text style={[
+                                        agendaHeaderStyles.dayOfWeekText, 
+                                        isToday && agendaHeaderStyles.todayText
+                                    ]}>
                                         {getDayOfWeekAbrev(day)}
                                     </Text>
-                                    <View style={[agendaHeaderStyles.dateCircle, isToday && agendaHeaderStyles.dateCircleActive]}>
-                                        <Text style={[agendaHeaderStyles.dayOfMonthText, isToday && agendaHeaderStyles.todayTextCircle]}>
-                                            {day.getDate()}
-                                        </Text>
+                                    
+                                    {/* CONTÊINER RELATIVO PARA A PÍLULA DE CONEXÃO */}
+                                    <View style={agendaHeaderStyles.dateRangeWrapper}>
+                                        
+                                        {/* Pontes de Conexão Absolutas (Renderizadas por trás do círculo) */}
+                                        {isLeftConnected && <View style={agendaHeaderStyles.connectorLeft} />}
+                                        {isRightConnected && <View style={agendaHeaderStyles.connectorRight} />}
+
+                                        {/* Círculo do Número */}
+                                        <View style={[
+                                            agendaHeaderStyles.dateCircle, 
+                                            isActive && agendaHeaderStyles.dateCircleActive,
+                                            isToday && isActive && agendaHeaderStyles.todayActiveCircle // Adiciona a borda branca se for Hoje E estiver selecionado
+                                        ]}>
+                                            <Text style={[
+                                                agendaHeaderStyles.dayOfMonthText, 
+                                                isToday && !isActive && agendaHeaderStyles.todayText, 
+                                                isActive && agendaHeaderStyles.activeTextCircle       
+                                            ]}>
+                                                {day.getDate()}
+                                            </Text>
+                                        </View>
+                                        
                                     </View>
                                 </TouchableOpacity>
                             );

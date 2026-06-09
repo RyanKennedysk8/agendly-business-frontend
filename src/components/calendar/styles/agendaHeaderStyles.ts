@@ -6,8 +6,6 @@ import { scale as l, verticalScale as a, moderateScale as td } from 'react-nativ
 export const agendaHeaderStyles = StyleSheet.create({
     container: {
         backgroundColor: '#FFFFFF',
-        borderBottomWidth: 1,
-        borderBottomColor: '#E5E7EB',
         zIndex: 10,
       
     },
@@ -16,7 +14,7 @@ export const agendaHeaderStyles = StyleSheet.create({
         flexDirection:"row",
         justifyContent:"space-between",
         paddingHorizontal: l(10),
-        paddingVertical:a(5),
+        paddingVertical:a(10),
         backgroundColor:Colors.corButton
     },
     monthSelector: {
@@ -27,6 +25,12 @@ export const agendaHeaderStyles = StyleSheet.create({
     },
     monthText: {
         fontSize: td(18),
+        fontFamily:fonts.robotoBold,
+        color: Colors.white,
+        textTransform: 'capitalize'
+    },
+    yearText: {
+        fontSize: td(10),
         fontFamily:fonts.robotoBold,
         color: Colors.white,
         textTransform: 'capitalize'
@@ -83,8 +87,6 @@ export const agendaHeaderStyles = StyleSheet.create({
         width: l(60),
         justifyContent:"center",
         alignItems:"center",
-        borderRightWidth:1,
-        borderColor:Colors.gray
         
     },
     columnsWrapper: {
@@ -99,15 +101,14 @@ export const agendaHeaderStyles = StyleSheet.create({
     },
     dayOfWeekText: {
         fontSize: td(11),
-        fontWeight: '600',
-        color: '#6B7280',
-        textTransform: 'uppercase',
+        fontFamily:fonts.robotoMedium,
+        color: Colors.corTextLight,
         marginBottom: a(4),
     },
     dateCircle: {
-        width: l(28),
-        height: l(28),
-        borderRadius: td(14),
+        width: td(30),
+        height: td(30),
+        borderRadius: td(15),
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -125,5 +126,36 @@ export const agendaHeaderStyles = StyleSheet.create({
     todayTextCircle: {
         color: '#FFFFFF',
         fontWeight: 'bold',
-    }
+    },
+    activeTextCircle: {
+        color: '#FFFFFF',
+        fontWeight: 'bold',
+    },
+    dateRangeWrapper: {
+        width: '100%',
+        height: l(28),
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+    },
+    connectorLeft: {
+        position: 'absolute',
+        left: -1, // Previne gap subpixel entre as colunas
+        right: '50%',
+        height: '100%',
+        backgroundColor: '#FF7A00',
+    
+    },
+    connectorRight: {
+        position: 'absolute',
+        left: '50%',
+        right: -1,
+        height: '100%',
+        backgroundColor: '#FF7A00',
+    },
+    todayActiveCircle: {
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
+    },
+    
 });

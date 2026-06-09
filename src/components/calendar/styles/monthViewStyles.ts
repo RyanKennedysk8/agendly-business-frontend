@@ -10,8 +10,6 @@ export const monthViewStyles = StyleSheet.create({
     },
     calendarSection: {
         paddingHorizontal: l(8),
-        borderBottomWidth: 1,
-        borderBottomColor: '#E5E7EB',
         backgroundColor: Colors.corButton,
         borderBottomRightRadius:td(15),
         borderBottomLeftRadius:td(15)
@@ -56,6 +54,15 @@ export const monthViewStyles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    cellToday: {
+        width: td(40),
+        height: td(40),
+        borderRadius: td(20),
+        borderWidth: 2,
+        borderColor: Colors.white,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     textSelected: {
         color: Colors.corButton,
         fontFamily:fonts.robotoBold,
@@ -63,25 +70,22 @@ export const monthViewStyles = StyleSheet.create({
     // Badge indicador de volume de agendamento
     badgeDot: {
         position: 'absolute',
-        bottom: a(1),
-        backgroundColor: Colors.corText,
-        borderRadius: td(10),
+        bottom: a(0),
+        backgroundColor: Colors.blue,
+        borderRadius: td(7),
         minWidth: l(14),
         height: a(12),
         alignItems: 'center', 
-        justifyContent: 'center',
-        paddingHorizontal: l(2),
+        justifyContent: 'center'
     },
     badgeText: {
-        fontSize: td(8),
+        fontSize: td(9),
         color: '#FFFFFF',
         fontWeight: 'bold',
     },
-    // Região da Lista Otimizada (Metade Inferior)
+
     listSection: {
-        flex: 1,
-        backgroundColor: Colors.white,
-        minHeight: a(200),
+        flex: 1
     },
     listEmptyContainer: {
         flex: 1,

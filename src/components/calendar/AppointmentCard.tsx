@@ -13,10 +13,12 @@ export const AppointmentCard = memo(({ appointment, onPress }: AppointmentCardPr
     const { layout, serviceName, employeeName, startTime, endTime } = appointment;
     const colors = getEmployeeColor(appointment.employeeId);
 
+    
+
     // Formatação de hora local para exibição no card (ex: 08:30)
     const startStr = new Date(startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const endStr = new Date(endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
+    
     return (
         <TouchableOpacity
             activeOpacity={0.8}

@@ -6,6 +6,7 @@ import { computeAppointmentsCache, generateMonthMatrix } from '../../utils/month
 import { monthViewStyles } from './styles/monthViewStyles';
 import { getEmployeeColor } from './styles/colorMapper';
 import { a } from '@/constants/responsive';
+import { Colors } from '@/colors/color';
 
 interface MonthViewProps {
     selectedDate: Date;
@@ -27,12 +28,6 @@ export const MonthView = ({ selectedDate, setSelectedDate, appointments = [] }: 
     //  Memoriza o mapa hash de agendamentos por chave YYYY-MM-DD para busca O(1)
     const appointmentsCache = useMemo(() => computeAppointmentsCache(appointments), [appointments]);
 
-    const getItemLayout = (data: any, index: number) => ({
-        length: ITEM_HEIGHT,
-        offset: ITEM_HEIGHT * index,
-        index,
-    });
-
     //  Filtra de forma linear apenas os registros pertencentes ao dia selecionado pelo gestor
     const selectedDayAppointments = useMemo(() => {
         const targetKey = selectedDate.toISOString().split('T')[0];
@@ -46,6 +41,8 @@ export const MonthView = ({ selectedDate, setSelectedDate, appointments = [] }: 
         const isSelected = date.toDateString() === selectedDate.toDateString();
         const appointmentCount = appointmentsCache[dateKey] || 0;
 
+        const isToday = date.toDateString() === new Date().toDateString();
+
         return (
             <TouchableOpacity
                 key={`cell-${index}`}
@@ -53,7 +50,10 @@ export const MonthView = ({ selectedDate, setSelectedDate, appointments = [] }: 
                 activeOpacity={0.7}
                 onPress={() => setSelectedDate(date)}
             >
-                <View style={isSelected ? monthViewStyles.cellSelected : null}>
+                <View style={[
+                    isSelected && monthViewStyles.cellSelected, 
+                    isToday && !isSelected && monthViewStyles.cellToday
+                ]}>
                     <Text style={[
                         monthViewStyles.cellDayText,
                         !isCurrentMonth && monthViewStyles.cellDayOutside,
@@ -90,7 +90,6 @@ export const MonthView = ({ selectedDate, setSelectedDate, appointments = [] }: 
 
     return (
         <View style={monthViewStyles.container}>
-            {/* Metade Superior: Grade Calendário */}
             <View style={monthViewStyles.calendarSection}>
                 <View style={monthViewStyles.weekDaysRow}>
                     {WEEK_DAYS_LABELS.map(label => (
@@ -103,20 +102,21 @@ export const MonthView = ({ selectedDate, setSelectedDate, appointments = [] }: 
                 </View>
             </View>
 
-            {/* Metade Inferior: Listagem Otimizada Nativa */}
-            <FlashList
-                data={selectedDayAppointments}
-                keyExtractor={(item, index) => `${item.appointmentId}-${item.startTime}-${index}`}
-                renderItem={renderAppointmentItem}
-                style={monthViewStyles.listSection}
-                showsVerticalScrollIndicator={false}
+            <View style={{flex:1, backgroundColor:Colors.white}}>
+                <FlashList
+                    data={selectedDayAppointments}
+                    keyExtractor={(item, index) => `${item.appointmentId}-${item.startTime}-${index}`}
+                    renderItem={renderAppointmentItem}
+                    style={monthViewStyles.listSection}
+                    showsVerticalScrollIndicator={false}
 
-                ListEmptyComponent={
-                    <View style={monthViewStyles.listEmptyContainer}>
-                        <Text style={monthViewStyles.listEmptyText}>Nenhum agendamento para este dia.</Text>
-                    </View>
-                }
-            />
+                    ListEmptyComponent={
+                        <View style={monthViewStyles.listEmptyContainer}>
+                            <Text style={monthViewStyles.listEmptyText}>Nenhum agendamento para este dia.</Text>
+                        </View>
+                    }
+                />
+            </View>
         </View>
     );
 };

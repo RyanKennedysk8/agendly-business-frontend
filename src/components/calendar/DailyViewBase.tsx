@@ -45,10 +45,10 @@ export const DailyViewBase = ({ visibleDays = [], appointments = [] }: DailyView
                 appt.startTime && appt.startTime.startsWith(dateStr)
             );
 
-            // 1. Processa a cascata matemática
+            //  Processa a cascata matemática
             const processed = processDayAppointments(dayAppointments);
 
-            // 2. Alinha os agendamentos ao grid reduzido (Offset Y)
+            //  Alinha os agendamentos ao grid reduzido (Offset Y)
             const aligned = processed.map(appt => ({
                 ...appt,
                 layout: {

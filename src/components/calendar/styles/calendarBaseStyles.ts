@@ -23,8 +23,6 @@ export const calendarBaseStyles = StyleSheet.create({
     },
     timeAxisContainer: {
         width: l(60),
-        borderRightWidth: 1,
-        borderRightColor: Colors.gray,
         backgroundColor: Colors.white,
         zIndex: 2,
         height: TOTAL_GRID_HEIGHT, // Aplicação dinâmica
@@ -52,7 +50,7 @@ export const calendarBaseStyles = StyleSheet.create({
         left: 0,
         right: 0,
         height: 1,
-        backgroundColor: Colors.gray,
+        backgroundColor: Colors.gray
     },
     gridLineHalfHour: {
         position: 'absolute',

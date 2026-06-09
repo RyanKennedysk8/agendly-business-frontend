@@ -6,7 +6,7 @@ export const appointmentCardStyles = StyleSheet.create({
     cardContainer: {
         position: 'absolute',
         borderRadius: td(2),
-        padding: l(5),
+        padding: td(2),
         overflow: 'hidden', // Fundamental para agendamentos curtos (ex: 15 min)
     },
     clientName: {

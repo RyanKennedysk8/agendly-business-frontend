@@ -171,5 +171,7 @@ const styles = StyleSheet.create({
     },
     pageWrapper: {
         flex: 1,
+        borderTopWidth: 1,
+        borderTopColor: '#E5E7EB',
     }
 });
