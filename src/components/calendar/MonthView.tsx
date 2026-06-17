@@ -16,10 +16,6 @@ interface MonthViewProps {
 
 const WEEK_DAYS_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-const ITEM_HEIGHT = a(75);
-
-
-
 export const MonthView = ({ selectedDate, setSelectedDate, appointments = [] }: MonthViewProps) => {
     
     //  Memoriza a matriz matemática do mês atual

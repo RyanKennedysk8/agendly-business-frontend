@@ -137,20 +137,13 @@ export const AgendaHeader = ({
                             // Verifica se o dia atual está ativo na grade
                             const isActive = visibleDays.some(vd => vd.toDateString() === day.toDateString());
 
-                            // LÓGICA DE CONEXÃO: Verifica se os vizinhos também estão ativos na grade
-                            const prevDay = index > 0 ? headerWeekDays[index - 1] : null;
-                            const nextDay = index < 6 ? headerWeekDays[index + 1] : null;
-
-                            const isPrevActive = prevDay ? visibleDays.some(vd => vd.toDateString() === prevDay.toDateString()) : false;
-                            const isNextActive = nextDay ? visibleDays.some(vd => vd.toDateString() === nextDay.toDateString()) : false;
-
-                            const isLeftConnected = isActive && isPrevActive;
-                            const isRightConnected = isActive && isNextActive;
-
+                
                             return (
                                 <TouchableOpacity 
                                     key={index} 
-                                    style={agendaHeaderStyles.dayColumnHeader}
+                                    style={[agendaHeaderStyles.dayColumnHeader,
+                                        isActive && agendaHeaderStyles.dateCircleActive,
+                                    ]}
                                     activeOpacity={0.6}
                                     onPress={() => {
                                         if (onDayPress) onDayPress(day);
@@ -158,7 +151,7 @@ export const AgendaHeader = ({
                                 >
                                     <Text style={[
                                         agendaHeaderStyles.dayOfWeekText, 
-                                        isToday && agendaHeaderStyles.todayText
+                                        isActive && agendaHeaderStyles.tabTextActive,
                                     ]}>
                                         {getDayOfWeekAbrev(day)}
                                     </Text>
@@ -166,19 +159,14 @@ export const AgendaHeader = ({
                                     {/* CONTÊINER RELATIVO PARA A PÍLULA DE CONEXÃO */}
                                     <View style={agendaHeaderStyles.dateRangeWrapper}>
                                         
-                                        {/* Pontes de Conexão Absolutas (Renderizadas por trás do círculo) */}
-                                        {isLeftConnected && <View style={agendaHeaderStyles.connectorLeft} />}
-                                        {isRightConnected && <View style={agendaHeaderStyles.connectorRight} />}
 
                                         {/* Círculo do Número */}
                                         <View style={[
                                             agendaHeaderStyles.dateCircle, 
                                             isActive && agendaHeaderStyles.dateCircleActive,
-                                            isToday && isActive && agendaHeaderStyles.todayActiveCircle // Adiciona a borda branca se for Hoje E estiver selecionado
                                         ]}>
                                             <Text style={[
                                                 agendaHeaderStyles.dayOfMonthText, 
-                                                isToday && !isActive && agendaHeaderStyles.todayText, 
                                                 isActive && agendaHeaderStyles.activeTextCircle       
                                             ]}>
                                                 {day.getDate()}

@@ -28,30 +28,31 @@ export function processDayAppointments(appointments: AppointmentDetail[]): Rende
     let currentCluster: RenderableAppointment[] = [];
     let clusterEndTime = 0;
     const EVENT_GAP = 4;
-    
+
     // Agrupamento de Colisões (Clusters)
     sorted.forEach(appt => {
         const startDate = new Date(appt.startTime);
         const startMs = startDate.getTime();
         const endMs = new Date(appt.endTime).getTime();
+        const CARD_GAP = 2;
 
-        const top = (startDate.getHours() * 60 + startDate.getMinutes()) * MINUTE_HEIGHT;
-        const CARD_GAP = 1;
-      
+        const top =
+        (startDate.getHours() * 60 + startDate.getMinutes()) *
+        MINUTE_HEIGHT +
+        CARD_GAP;
 
-        const height = Math.max( appt.serviceDuration * MINUTE_HEIGHT - CARD_GAP, 10 );
-
-        
+        const height = Math.max(
+            appt.serviceDuration * MINUTE_HEIGHT - 3,
+            10
+        );
         const renderable: RenderableAppointment = {
             ...appt,
             layout: { top, height, left: '0%', width: '100%', zIndex: 1 }
         };
-
         if (currentCluster.length > 0 && startMs >= clusterEndTime) {
             clusters.push(currentCluster);
             currentCluster = [];
         }
-
         currentCluster.push(renderable);
         clusterEndTime = Math.max(clusterEndTime, endMs);
     });

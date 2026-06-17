@@ -7,13 +7,13 @@ import { Colors } from '@/colors/color';
 
 export const TimeGrid = memo(({ date }: { date: Date }) => {
     const { startHour, endHour } = getGlobalWorkBounds();
-    const slots = generateTimeSlots(30, startHour, endHour);
+    const slots = generateTimeSlots(15, startHour, endHour);
 
     return (
         <View style={calendarBaseStyles.absoluteGridLines}>
             {slots.map((time, index) => {
                 const isClosed = isSlotClosed(date, time);
-                const top =((index * 30) + TOP_PADDING_MINUTES) * MINUTE_HEIGHT;
+                const top =((index * 15) + TOP_PADDING_MINUTES) * MINUTE_HEIGHT;
 
                 return (
                     <View key={`grid-${index}`} style={{ position: 'absolute', top, left: 0, right: 0 }}>
@@ -21,7 +21,7 @@ export const TimeGrid = memo(({ date }: { date: Date }) => {
                         {isClosed && (
                             <View style={{
                                 height: 30 * MINUTE_HEIGHT,
-                                backgroundColor: Colors.corContainer, // Cinza claro profissional
+                                backgroundColor: Colors.gray, // Cinza claro profissional
                                 width: '100%'
                             }} />
                         )}

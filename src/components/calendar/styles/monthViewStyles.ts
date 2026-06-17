@@ -27,27 +27,28 @@ export const monthViewStyles = StyleSheet.create({
     },
     gridWrapper: {
         flexDirection: 'row',
-        flexWrap: 'wrap', // Força a quebra automática a cada 7 itens
+        flexWrap: 'wrap',
+        marginVertical:a(5)
     },
     cellContainer: {
         height: td(40),
         width: '14.2857%', // Garante exatamente 7 colunas por linha
-        aspectRatio: 1.1, // Células levemente retangulares para ergonomia tátil
+        aspectRatio: undefined,
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
     },
     cellDayText: {
-        fontSize: td(15),
-        fontFamily:fonts.robotoMedium,
+        fontSize: td(13),
+        fontFamily:fonts.robotoBold,
         color: Colors.white,
     },
     cellDayOutside: {
         fontFamily:fonts.robotoRegular,
-        color: Colors.corButtonOff, // Apaga visualmente os dias dos meses adjacentes
+        color: "#F5F5F5", 
     },
     cellSelected: {
-        backgroundColor: Colors.white, // Sua cor primária de destaque de seleção
+        backgroundColor: Colors.white,
         borderRadius: td(20),
         width: td(40), 
         height: td(40),
@@ -67,7 +68,6 @@ export const monthViewStyles = StyleSheet.create({
         color: Colors.corButton,
         fontFamily:fonts.robotoBold,
     },
-    // Badge indicador de volume de agendamento
     badgeDot: {
         position: 'absolute',
         bottom: a(0),

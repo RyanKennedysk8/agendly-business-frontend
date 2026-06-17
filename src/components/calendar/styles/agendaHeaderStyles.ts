@@ -37,22 +37,22 @@ export const agendaHeaderStyles = StyleSheet.create({
     },
     tabsContainer: {
         flexDirection: 'row',
-        backgroundColor: '#F3F4F6',
+        backgroundColor: Colors.corContainer,
         borderRadius: td(8),
         padding: l(2),
     },
     tabButton: {
         paddingVertical: a(6),
         paddingHorizontal: l(12),
-        borderRadius: td(6),
+        borderRadius: td(6)
     },
     tabButtonActive: {
-        backgroundColor: '#FF7A00',
+        backgroundColor: Colors.corButton,
     },
     tabText: {
         fontSize: td(12),
-        fontWeight: '600',
-        color: '#6B7280',
+        fontFamily:fonts.robotoMedium,
+        color: Colors.corText,
     },
     tabTextActive: {
         color: '#FFFFFF',
@@ -97,13 +97,17 @@ export const agendaHeaderStyles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: a(4),
+        paddingVertical: a(2),
+        marginHorizontal: l(2),
+        marginVertical: a(5),
+        backgroundColor:Colors.corContainer,
+        borderRadius: td(10)
     },
     dayOfWeekText: {
         fontSize: td(11),
         fontFamily:fonts.robotoMedium,
         color: Colors.corTextLight,
-        marginBottom: a(4),
+
     },
     dateCircle: {
         width: td(30),
@@ -113,7 +117,7 @@ export const agendaHeaderStyles = StyleSheet.create({
         justifyContent: 'center',
     },
     dateCircleActive: {
-        backgroundColor: '#FF7A00',
+        backgroundColor: Colors.corButton,
     },
     dayOfMonthText: {
         fontSize: td(16),
@@ -121,7 +125,7 @@ export const agendaHeaderStyles = StyleSheet.create({
         color: '#111827',
     },
     todayText: {
-        color: '#FF7A00',
+        color: Colors.corButton,
     },
     todayTextCircle: {
         color: '#FFFFFF',
@@ -137,21 +141,6 @@ export const agendaHeaderStyles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
-    },
-    connectorLeft: {
-        position: 'absolute',
-        left: -1, // Previne gap subpixel entre as colunas
-        right: '50%',
-        height: '100%',
-        backgroundColor: '#FF7A00',
-    
-    },
-    connectorRight: {
-        position: 'absolute',
-        left: '50%',
-        right: -1,
-        height: '100%',
-        backgroundColor: '#FF7A00',
     },
     todayActiveCircle: {
         borderWidth: 2,

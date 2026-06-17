@@ -29,6 +29,7 @@ export const DailyViewBase = ({ visibleDays = [], appointments = [] }: DailyView
         return () => clearTimeout(timer);
     }, [visibleDays]);
 
+    
     const columnsData = useMemo(() => {
         if (!visibleDays || visibleDays.length === 0) return [];
         
