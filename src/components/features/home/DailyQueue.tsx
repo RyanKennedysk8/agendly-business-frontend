@@ -1,15 +1,17 @@
 // src/components/home/DailyQueue.tsx
+
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native';
 import { td, a, l } from '@/constants/responsive';
 import { fonts } from '@/assets/fonts/fonts';
 import { Colors } from '@/colors/color';
-import { QueueItem, QueueItemType } from './QueueItem';
+import { AppointmentDetail } from '@/types/appointments';
+import { QueueItem } from './QueueItem';
 
 interface DailyQueueProps {
-  queue: QueueItemType[];
-  onViewAll: () => void;
-  onItemAction: (id: string) => void;
+  queue: AppointmentDetail[];
+  onViewAll: () =>void;
+  onItemAction: (appointmentId: string) => void;
 }
 
 export const DailyQueue: React.FC<DailyQueueProps> = ({
@@ -30,7 +32,7 @@ export const DailyQueue: React.FC<DailyQueueProps> = ({
       <View style={styles.container}>
         <FlatList
           data={queue}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.appointmentId}
           renderItem={({ item, index }) => (
             <QueueItem
               item={item}
@@ -49,6 +51,7 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: a(32),
   },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -56,16 +59,19 @@ const styles = StyleSheet.create({
     marginBottom: a(16),
     marginHorizontal: l(5),
   },
+
   title: {
     fontSize: td(16),
     fontFamily: fonts.robotoMedium,
     color: Colors.corText,
   },
+
   link: {
     fontSize: td(12),
     fontFamily: fonts.robotoBold,
     color: Colors.corScreen,
   },
+
   container: {
     backgroundColor: '#FFFFFF',
     borderRadius: td(16),

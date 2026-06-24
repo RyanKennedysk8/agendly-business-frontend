@@ -7,18 +7,44 @@ export interface ServiceDTO {
     categoryName: string;
     employeeNames: string[];
   }
-  
+
   export interface OperatingHourDTO {
     daysOfWeek: string[];
-    openingTime: string;
-    closingTime: string;
-    breakStartTime: string | null;
-    breakEndTime: string | null;
-  }
+    openingTime: string;  
+    closingTime: string;  
+    breakStartTime?: string; 
+    breakEndTime?: string;   
+}
+export type CompanyStatus = 'OPEN' | 'CLOSED' | 'BREAK';
+
+export interface CompanyDetailResponse { 
+  id: string;   
+  name: string;
+  categoryName: string;  
+  displayName:string;
+  logoUrl: string | null;
+  images: string[]; 
+  allowsEmployeeChoice: boolean;
+  isRecommended: boolean;
+  address: CompanyAddressDTO | null;
+  services: ServiceDTO[];
+  employees: EmployeeDTO[]; 
+  operatingHours: OperatingHourDTO[];
+  distance:number; 
+  isOpen: boolean; 
+  status:CompanyStatus;
+  averageRating: number;
+  totalReviews: number;
+  starsDistribution: number[];
+  nextTransitionMessage: string;
+  nextTransitionTime: string | null;
+  isFavorite: boolean;
+}
   
   export interface EmployeeDTO {
     name: string;
     photoUrl: string;
+    color?:string;
     daysOff: string[];
     specificOperatingHours: OperatingHourDTO[];
   }

@@ -11,7 +11,7 @@ export type ColorPalette = {
     corTextLight:string,
     corTextStrong:string,
     transparente:string;
-    semiTransparente:string;
+    semiTransparente:string; 
     placeholder: string;
     gray:string;
     success:string,
@@ -28,6 +28,7 @@ export type ColorPalette = {
     pink:string;
     green:string;
     orange:string;
+    
   }; 
   
   export const Colors: ColorPalette = {
@@ -65,7 +66,7 @@ export type ColorPalette = {
     yellow: '#FFC107',
     yellowNotice:"#FFF8E1",
     red: "#F23C3C",
-    pink:"rgba(249, 125, 160, 1)",
+    pink:"#ff1d8d",
     green:'#10B981',
     orange:'#E86A00'
   

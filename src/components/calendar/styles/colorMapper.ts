@@ -1,14 +1,11 @@
-export const getEmployeeColor = (employeeId?: string): { background: string, border: string } => {
-    // Usando sua cor primária como fallback ou para a própria empresa
-    const defaultColor = { background: '#FF7A00', border: '#CC6200' };
-    
-    if (!employeeId) return defaultColor;
+export function darkenColor(hex: string, amount = 20) {
+    const color = hex.replace('#', '');
 
-    const colorMap: Record<string, { background: string, border: string }> = {
-        'e1': { background: '#3B82F6', border: '#2563EB' }, // Azul (Ryan)
-        'e2': { background: '#EC4899', border: '#DB2777' }, // Rosa (Maria)
-        'e3': { background: '#10B981', border: '#059669' }, // Verde (Bruno)
-    };
+    const r = Math.max(0, parseInt(color.substring(0, 2), 16) - amount);
+    const g = Math.max(0, parseInt(color.substring(2, 4), 16) - amount);
+    const b = Math.max(0, parseInt(color.substring(4, 6), 16) - amount);
 
-    return colorMap[employeeId] || defaultColor;
-};
+    return `#${[r, g, b]
+        .map(c => c.toString(16).padStart(2, '0'))
+        .join('')}`;
+}

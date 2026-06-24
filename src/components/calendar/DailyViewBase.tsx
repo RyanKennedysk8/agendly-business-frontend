@@ -1,25 +1,32 @@
-// src/components/calendar/DailyViewBase.tsx
 import React, { useRef, useEffect, useMemo } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, RefreshControl } from 'react-native';
 import { TimeAxis } from './TimeAxis';
 import { TimeGrid } from './TimeGrid';
 import { AppointmentCard } from './AppointmentCard';
 import { MINUTE_HEIGHT } from '../../utils/calendarMetrics';
 import { getGlobalWorkBounds } from '../../utils/workTimeEngine';
 import { AppointmentDetail } from '@/types/appointments';
-import { processDayAppointments } from '@/utils/overLapEngine';
+import { processDayAppointments } from '../../utils/overLapEngine';
 import { calendarBaseStyles, TOP_PADDING_MINUTES } from './styles/calendarBaseStyles';
-import { a } from '@/constants/responsive';
+import { OperatingHourDTO } from '@/types/company';
 
 interface DailyViewBaseProps {
     visibleDays: Date[];
     appointments: AppointmentDetail[];
+    operatingHours: OperatingHourDTO[];
+    isRefetching: boolean;
+    onRefresh: () => void;
 }
 
-export const DailyViewBase = ({ visibleDays = [], appointments = [] }: DailyViewBaseProps) => {
+export const DailyViewBase = ({ 
+    visibleDays = [], 
+    appointments = [], 
+    operatingHours = [],
+    isRefetching, 
+    onRefresh 
+}: DailyViewBaseProps) => {
     const scrollRef = useRef<ScrollView>(null);
 
-    // Efeito de scroll automático para o início do expediente
     useEffect(() => {
         const timer = setTimeout(() => {
             if (scrollRef.current) {
@@ -29,11 +36,10 @@ export const DailyViewBase = ({ visibleDays = [], appointments = [] }: DailyView
         return () => clearTimeout(timer);
     }, [visibleDays]);
 
-    
     const columnsData = useMemo(() => {
         if (!visibleDays || visibleDays.length === 0) return [];
         
-        const { startHour } = getGlobalWorkBounds();
+        const { startHour } = getGlobalWorkBounds(operatingHours);
         const startOffsetMinutes = startHour * 60;
 
         return visibleDays.map(day => {
@@ -46,17 +52,14 @@ export const DailyViewBase = ({ visibleDays = [], appointments = [] }: DailyView
                 appt.startTime && appt.startTime.startsWith(dateStr)
             );
 
-            //  Processa a cascata matemática
             const processed = processDayAppointments(dayAppointments);
 
-            //  Alinha os agendamentos ao grid reduzido (Offset Y)
             const aligned = processed.map(appt => ({
                 ...appt,
                 layout: {
                     ...appt.layout,
                     top: appt.layout.top -
-                        (startOffsetMinutes * MINUTE_HEIGHT)
-                        +
+                        (startOffsetMinutes * MINUTE_HEIGHT) +
                         (TOP_PADDING_MINUTES * MINUTE_HEIGHT)
                 }
             }));
@@ -67,27 +70,32 @@ export const DailyViewBase = ({ visibleDays = [], appointments = [] }: DailyView
                 appointments: aligned
             };
         });
-    }, [visibleDays, appointments]);
+    }, [visibleDays, appointments, operatingHours]);
 
     return (
         <View style={calendarBaseStyles.gridContainer}>
             <ScrollView
                 ref={scrollRef}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={[
-                    calendarBaseStyles.scrollContent
-                ]}
-                 overScrollMode="never"
-                 bounces={false}
+                contentContainerStyle={[calendarBaseStyles.scrollContent]}
+                overScrollMode="always"
+                bounces={true} 
+                refreshControl={
+                    <RefreshControl 
+                        refreshing={isRefetching} 
+                        onRefresh={onRefresh} 
+                        tintColor="#FF7A00" 
+                        colors={["#FF7A00"]} 
+                    />
+                }
             >
-                <TimeAxis />
+                <TimeAxis operatingHours={operatingHours}/>
                 <View style={calendarBaseStyles.gridContainer}>
                     <View style={calendarBaseStyles.columnsWrapper}>
                         {columnsData.map((column) => (
                             <View key={column.dateKey} style={calendarBaseStyles.dayColumn}>
-                                <TimeGrid date={column.date} />
+                                <TimeGrid date={column.date} operatingHours={operatingHours}/>
                                 
-                                {/* Renderiza os agendamentos por cima */}
                                 {column.appointments.map((appt) => (
                                     <AppointmentCard 
                                         key={appt.appointmentId} 

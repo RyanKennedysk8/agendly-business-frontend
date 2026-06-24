@@ -8,12 +8,10 @@ import { MonthView } from './MonthView';
 import { MonthPickerModal } from './MonthPickerModal'; // Inclusão do novo Modal
 
 import { useAgendaNavigation, ViewMode } from '../../hooks/useAgendaNavigation';
-import { AppointmentDetail } from '@/types/appointments';
+import { useAgendaAppointments } from '@/hooks/useAgendaAppointments';
+import { useMyCompany } from '@/hooks/useMyCompany';
 
-interface CalendarPagerProps {
-    appointments: AppointmentDetail[];
-    staffList: any[];
-}
+
 
 function getVisibleDaysForDate(baseDate: Date, viewMode: ViewMode): Date[] {
     const days: Date[] = [];
@@ -42,7 +40,7 @@ function getVisibleDaysForDate(baseDate: Date, viewMode: ViewMode): Date[] {
     return days;
 }
 
-export const CalendarPager = ({ appointments = [], staffList = [] }: CalendarPagerProps) => {
+export const CalendarPager = () => {
     const pagerRef = useRef<PagerView>(null);
     
     // Controle de estado local para visibilidade do Modal de UX
@@ -55,6 +53,15 @@ export const CalendarPager = ({ appointments = [], staffList = [] }: CalendarPag
         changeViewMode, 
         visibleDays
     } = useAgendaNavigation();
+
+    const { 
+        data: appointments = [], 
+        isRefetching, 
+        refetch 
+    } = useAgendaAppointments(selectedDate);
+
+    const { data: company } = useMyCompany();
+    const operatingHours = company?.operatingHours || [];
 
     const currentVisibleDays = visibleDays;
 
@@ -128,6 +135,8 @@ export const CalendarPager = ({ appointments = [], staffList = [] }: CalendarPag
                     selectedDate={selectedDate}
                     setSelectedDate={setSelectedDate}
                     appointments={appointments}
+                    isRefetching={isRefetching} 
+                    onRefresh={refetch}
                 />
             ) : (
                 <PagerView
@@ -139,18 +148,17 @@ export const CalendarPager = ({ appointments = [], staffList = [] }: CalendarPag
                     overScrollMode="never"
                 >
                     <View key="page-prev" style={styles.pageWrapper}>
-                        <DailyViewBase visibleDays={prevVisibleDays} appointments={appointments} />
+                        <DailyViewBase visibleDays={prevVisibleDays} appointments={appointments} operatingHours={operatingHours} isRefetching={isRefetching} onRefresh={refetch} />
                     </View>
                     <View key="page-current" style={styles.pageWrapper}>
-                        <DailyViewBase visibleDays={currentVisibleDays} appointments={appointments} />
+                        <DailyViewBase visibleDays={currentVisibleDays} appointments={appointments} operatingHours={operatingHours} isRefetching={isRefetching} onRefresh={refetch} />
                     </View>
                     <View key="page-next" style={styles.pageWrapper}>
-                        <DailyViewBase visibleDays={nextVisibleDays} appointments={appointments} />
+                        <DailyViewBase visibleDays={nextVisibleDays} appointments={appointments} operatingHours={operatingHours} isRefetching={isRefetching} onRefresh={refetch} />
                     </View>
                 </PagerView>
             )}
 
-            {/* Injeção de renderização controlada do Modal de UX */}
             <MonthPickerModal 
                 isVisible={isMonthPickerVisible}
                 onClose={handleCloseMonthPicker}

@@ -1,3 +1,4 @@
+import { Colors } from '@/colors/color';
 import { CompanyMockDTO } from '@/types/company';
 
 export const COMPANY_MOCK: CompanyMockDTO = {
@@ -38,6 +39,7 @@ export const COMPANY_MOCK: CompanyMockDTO = {
     {
       name: "Silvano Kennedy",
       photoUrl: "https://i.pinimg.com/736x/d4/7d/f2/d47df2a0629bc144d2033bd7eea59c6a.jpg",
+      color:Colors.blue,
       daysOff: ["2025-06-25", "2025-06-26"],
       specificOperatingHours: [
         {
@@ -72,6 +74,7 @@ export const COMPANY_MOCK: CompanyMockDTO = {
     {
       name: "Ryan Kennedy",
       photoUrl: "https://i.pinimg.com/736x/54/f2/0a/54f20a3afdfce3cc6e6ae66e286e6d7c.jpg",
+      color:Colors.green,
       daysOff: [],
       specificOperatingHours: [
         {

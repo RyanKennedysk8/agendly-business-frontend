@@ -9,11 +9,11 @@ import { DailyQueue } from '@/components/features/home/DailyQueue';
 import { l, a } from '@/constants/responsive';
 import { Stack, useRouter } from 'expo-router';
 import { Colors } from '@/colors/color';
-import { mockQueue } from '@/mocks/appointments';
 import { QUICK_ACTIONS } from '@/mocks/home';
 import { COMPANY_MOCK } from '@/mocks/company';
 import { EmployeeStatusDTO, TeamOverview } from '@/components/features/home/TeamOverview';
 import { QuickScheduleCard } from '@/components/features/home/QuickScheduleCard';
+import { mockAppointments } from '@/mocks/mockAppointments';
 
 const mockFinancial = { revenue: 1450.00, expenses: 320.50 };
 
@@ -66,7 +66,7 @@ export default function HomeScreen() {
 
         <Animated.View entering={FadeInDown.delay(300).duration(400).springify()}>
           <DailyQueue 
-            queue={mockQueue} 
+            queue={mockAppointments} 
             onViewAll={handleViewQueue} 
             onItemAction={(id) => console.log(`Ação no item ${id}`)} 
           />

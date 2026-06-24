@@ -7,7 +7,7 @@ import { fonts } from '@/assets/fonts/fonts';
 
 // Executa a leitura dinâmica dos limites baseada no seu COMPANY_MOCK
 const { startHour, endHour } = getGlobalWorkBounds();
-export const TOP_PADDING_MINUTES = 15
+export const TOP_PADDING_MINUTES = 15;
 
 const TOTAL_GRID_HEIGHT = (
     ((endHour - startHour) * 60)
@@ -25,21 +25,33 @@ export const calendarBaseStyles = StyleSheet.create({
         width: l(60),
         backgroundColor: Colors.white,
         zIndex: 2,
-        height: TOTAL_GRID_HEIGHT, // Aplicação dinâmica
+        height: TOTAL_GRID_HEIGHT,
     },
-    timeSlotText: {
+    timeSlotHour: {
         position: 'absolute',
         width: '100%',
         textAlign: 'center',
         fontSize: td(12),
-        color: Colors.corTextSecondary,
-        fontFamily:fonts.robotoRegular,
+        color: Colors.corText,
+        fontFamily: fonts.robotoMedium,
         transform: [{ translateY: -td(6) }],
     },
+    timeSlotMinute: {
+        position: 'absolute',
+        width: '100%',
+        textAlign: 'center',
+        fontSize: td(10), 
+        color: Colors.corTextSecondary,
+        fontFamily: fonts.robotoRegular,
+        transform: [{ translateY: -td(6) }]
+    },
+
+    // -----------------------------------------
+
     gridContainer: {
         flex: 1,
         position: 'relative',
-        height: TOTAL_GRID_HEIGHT , 
+        height: TOTAL_GRID_HEIGHT, 
     },
     absoluteGridLines: {
         ...StyleSheet.absoluteFillObject,

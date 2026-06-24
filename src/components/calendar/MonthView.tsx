@@ -1,22 +1,22 @@
 import { AppointmentDetail } from '@/types/appointments';
 import { FlashList } from '@shopify/flash-list';
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { computeAppointmentsCache, generateMonthMatrix } from '../../utils/monthEngine';
 import { monthViewStyles } from './styles/monthViewStyles';
-import { getEmployeeColor } from './styles/colorMapper';
-import { a } from '@/constants/responsive';
 import { Colors } from '@/colors/color';
 
 interface MonthViewProps {
     selectedDate: Date;
     setSelectedDate: (date: Date) => void;
     appointments: AppointmentDetail[];
+    isRefetching: boolean;
+    onRefresh: () => void;
 }
 
 const WEEK_DAYS_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-export const MonthView = ({ selectedDate, setSelectedDate, appointments = [] }: MonthViewProps) => {
+export const MonthView = ({ selectedDate, setSelectedDate, appointments = [], isRefetching, onRefresh}: MonthViewProps) => {
     
     //  Memoriza a matriz matemática do mês atual
     const monthMatrix = useMemo(() => generateMonthMatrix(selectedDate), [selectedDate]);
@@ -70,13 +70,13 @@ export const MonthView = ({ selectedDate, setSelectedDate, appointments = [] }: 
     };
 
     const renderAppointmentItem = ({ item }: { item: AppointmentDetail }) => {
-        const colors = getEmployeeColor(item.employeeId);
+        
         const timeStr = new Date(item.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         return (
             <View style={monthViewStyles.appointmentItem}>
                 <Text style={monthViewStyles.timeIndicator}>{timeStr}</Text>
-                <View style={[monthViewStyles.cardContent, { borderLeftColor: colors.border }]}>
+                <View style={[monthViewStyles.cardContent, { borderLeftColor: item.employeeColor }]}>
                     <Text style={monthViewStyles.serviceTitle}>{item.serviceName}</Text>
                     <Text style={monthViewStyles.staffName}>Profissional: {item.employeeName}</Text>
                 </View>
@@ -105,6 +105,17 @@ export const MonthView = ({ selectedDate, setSelectedDate, appointments = [] }: 
                     renderItem={renderAppointmentItem}
                     style={monthViewStyles.listSection}
                     showsVerticalScrollIndicator={false}
+
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={isRefetching} 
+                            onRefresh={onRefresh} 
+                            tintColor="#FF7A00" 
+                            colors={["#FF7A00"]} 
+                        />
+                    }
+                   
+                    
 
                     ListEmptyComponent={
                         <View style={monthViewStyles.listEmptyContainer}>

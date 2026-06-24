@@ -33,6 +33,36 @@ export interface AppointmentResponseDTO {
   notes: string | null;
 };
 
+export interface AppointmentDetailDTO {
+    appointmentId: string;
+    startTime: string;
+    endTime: string;
+    status: AppointmentStatus;
+    priceAtBooking: number;
+    createdAt: string;
+    canReview: boolean;
+    notes?: string;
+    
+    // Detalhes do Serviço
+    serviceId: string;
+    serviceName: string;
+    serviceDuration: number;
+    
+    // Detalhes da Empresa
+    companyId: string;
+    companyName: string;
+    companyLogoUrl?: string;
+    companyAddress?: string;
+    companyLatitude?: number;
+    companyLongitude?: number;
+    
+    // Detalhes do Funcionário
+    employeeId?: string;
+    employeeName?: string;
+    employeePhotoUrl?: string;
+    employeeColorHex?: string;
+}
+
 export enum AppointmentStatus {
   PENDING_CONFIRMATION = 'PENDING_CONFIRMATION',
   CONFIRMED = 'CONFIRMED',
@@ -70,4 +100,6 @@ companyLongitude?:number | null;
 employeeId?: string;
 employeeName?: string;
 employeePhotoUrl?: string; 
+employeeColor?: string; 
+employeeColorHex?: string;
 }

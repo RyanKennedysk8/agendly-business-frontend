@@ -2,9 +2,10 @@ import { RenderableAppointment } from '@/utils/overLapEngine';
 import React, { memo, useState } from 'react';
 import { Text, TouchableOpacity, View, LayoutChangeEvent } from 'react-native';
 import { appointmentCardStyles } from './styles/appointmentCardStyles';
-import { getEmployeeColor } from './styles/colorMapper';
+import { darkenColor} from './styles/colorMapper';
 import { MINUTE_HEIGHT } from '@/utils/calendarMetrics';
 import { scale as l, moderateScale as td } from 'react-native-size-matters';
+import { Colors } from '@/colors/color';
 
 interface AppointmentCardProps {
     appointment: RenderableAppointment;
@@ -13,7 +14,10 @@ interface AppointmentCardProps {
 
 export const AppointmentCard = memo(({ appointment, onPress }: AppointmentCardProps) => {
     const { layout, serviceName, employeeName, startTime, endTime } = appointment;
-    const colors = getEmployeeColor(appointment.employeeId);
+
+    const backgroundColor = appointment.employeeColor ?? Colors.orange;
+    const borderColor = darkenColor(backgroundColor);
+
 
     const startStr = new Date(startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const endStr = new Date(endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -97,7 +101,7 @@ export const AppointmentCard = memo(({ appointment, onPress }: AppointmentCardPr
     return (
         <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => onPress && onPress(appointment)}
+            onPress={() => console.log(`Abrir agendamento: ${appointment.serviceName}`)}
             onLayout={handleLayout} // Vinculação do listener nativo de medição
             style={[
                 appointmentCardStyles.cardContainer,
@@ -107,8 +111,8 @@ export const AppointmentCard = memo(({ appointment, onPress }: AppointmentCardPr
                     left: layout.left,
                     width: layout.width, // Passa o DimensionValue original para renderização nativa
                     zIndex: layout.zIndex,
-                    backgroundColor: colors.background,
-                    borderLeftColor: colors.border,
+                    backgroundColor: backgroundColor,
+                    borderLeftColor: borderColor,
                     // Remove o padding interno se estiver no modo vertical para evitar compressão de texto
                     padding: isNarrowWidth ? 0 : td(3), 
                 }
