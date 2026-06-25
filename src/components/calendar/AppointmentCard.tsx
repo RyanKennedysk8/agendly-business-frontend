@@ -77,7 +77,7 @@ export const AppointmentCard = memo(({ appointment, onPress }: AppointmentCardPr
                     style={appointmentCardStyles.clientNameSmall} 
                     numberOfLines={1}
                 >
-                    {serviceName} • {employeeName}
+                    {serviceName} • {employeeName} • {startStr} - {endStr}
                 </Text>
             );
         }

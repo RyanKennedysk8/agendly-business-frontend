@@ -39,7 +39,7 @@ export const appointmentCardStyles = StyleSheet.create({
     },
     clientNameSmall: {
         fontSize: td(10),
-        fontFamily: fonts.robotoBold,
+        fontFamily: fonts.robotoMedium,
         color: '#FFFFFF',
     },
     serviceDetails: {

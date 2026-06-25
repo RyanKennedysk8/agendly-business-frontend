@@ -81,7 +81,7 @@ export const DailyViewBase = ({
                 overScrollMode="always"
                 bounces={true} 
                 refreshControl={
-                    <RefreshControl 
+                    <RefreshControl
                         refreshing={isRefetching} 
                         onRefresh={onRefresh} 
                         tintColor="#FF7A00" 

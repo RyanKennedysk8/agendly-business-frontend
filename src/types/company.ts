@@ -1,12 +1,14 @@
 // src/types/company.ts
 
-export interface ServiceDTO {
-    name: string;
-    price: number;
-    durationInMinutes: number;
-    categoryName: string;
-    employeeNames: string[];
-  }
+export interface ServiceResponseDTO {
+  id: string;
+  name: string;
+  price: number;
+  durationInMinutes: number;
+  isHomeService: boolean;
+  isPetService: boolean;
+  categoryName: string;
+}
 
   export interface OperatingHourDTO {
     daysOfWeek: string[];
@@ -27,7 +29,7 @@ export interface CompanyDetailResponse {
   allowsEmployeeChoice: boolean;
   isRecommended: boolean;
   address: CompanyAddressDTO | null;
-  services: ServiceDTO[];
+  services: ServiceResponseDTO[];
   employees: EmployeeDTO[]; 
   operatingHours: OperatingHourDTO[];
   distance:number; 
@@ -66,5 +68,5 @@ export interface CompanyDetailResponse {
     address: CompanyAddressDTO;
     operatingHours: OperatingHourDTO[];
     employees: EmployeeDTO[];
-    services: ServiceDTO[];
+    services: ServiceResponseDTO[];
   }

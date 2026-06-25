@@ -66,7 +66,7 @@ export default function HomeScreen() {
 
         <Animated.View entering={FadeInDown.delay(300).duration(400).springify()}>
           <DailyQueue 
-            queue={mockAppointments} 
+            queue={mockAppointments}  
             onViewAll={handleViewQueue} 
             onItemAction={(id) => console.log(`Ação no item ${id}`)} 
           />

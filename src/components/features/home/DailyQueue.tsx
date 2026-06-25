@@ -1,18 +1,20 @@
 // src/components/home/DailyQueue.tsx
 
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Pressable} from 'react-native';
 import { td, a, l } from '@/constants/responsive';
 import { fonts } from '@/assets/fonts/fonts';
 import { Colors } from '@/colors/color';
 import { AppointmentDetail } from '@/types/appointments';
 import { QueueItem } from './QueueItem';
+import { FlashList } from '@shopify/flash-list';
 
 interface DailyQueueProps {
   queue: AppointmentDetail[];
   onViewAll: () =>void;
   onItemAction: (appointmentId: string) => void;
 }
+
 
 export const DailyQueue: React.FC<DailyQueueProps> = ({
   queue,
@@ -30,7 +32,7 @@ export const DailyQueue: React.FC<DailyQueueProps> = ({
       </View>
 
       <View style={styles.container}>
-        <FlatList
+        <FlashList
           data={queue}
           keyExtractor={(item) => item.appointmentId}
           renderItem={({ item, index }) => (

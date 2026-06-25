@@ -19,7 +19,7 @@ type HeaderScreensProps = {
 export const SearchHeaderScreens = ({
   title,
   placeHolder,
-  onBack, 
+  onBack,  
   filtered,
   searchValue,
   onSearchChange

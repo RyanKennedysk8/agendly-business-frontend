@@ -1,7 +1,7 @@
 import { AppointmentDetail } from '@/types/appointments';
 import { FlashList } from '@shopify/flash-list';
 import React, { useMemo } from 'react';
-import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { computeAppointmentsCache, generateMonthMatrix } from '../../utils/monthEngine';
 import { monthViewStyles } from './styles/monthViewStyles';
 import { Colors } from '@/colors/color';
@@ -106,14 +106,8 @@ export const MonthView = ({ selectedDate, setSelectedDate, appointments = [], is
                     style={monthViewStyles.listSection}
                     showsVerticalScrollIndicator={false}
 
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={isRefetching} 
-                            onRefresh={onRefresh} 
-                            tintColor="#FF7A00" 
-                            colors={["#FF7A00"]} 
-                        />
-                    }
+                    refreshing={isRefetching}
+                    onRefresh={onRefresh}
                    
                     
 

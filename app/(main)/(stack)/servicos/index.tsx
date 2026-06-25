@@ -1,32 +1,33 @@
 // app/(main)/(stack)/servicos/index.tsx
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-
 import { l, a, td } from '@/constants/responsive';
 import { fonts } from '@/assets/fonts/fonts';
-import { MOCK_SERVICES, ServiceDTO } from '@/mocks/services';
 import { SearchHeaderScreens } from '@/components/layout/header';
 import { Colors } from '@/colors/color';
+import { useCompanyServices, ServiceResponseDTO } from '@/hooks/useCompanyServices';
 
 export default function ServicosScreen() {
   const router = useRouter();
   const [searchText, setSearchText] = useState('');
 
-  // 1. Motor de Busca (Filtra por Nome do Serviço ou Categoria)
+  //  Consumindo a API
+  const { data: services = [], isLoading, isError, refetch, isRefetching } = useCompanyServices();
+
+  // O Motor de Busca operando em cima dos dados cacheados do React Query
   const filteredServices = useMemo(() => {
-    if (!searchText.trim()) return MOCK_SERVICES;
+    if (!searchText.trim()) return services;
     
     const lowerSearch = searchText.toLowerCase().trim();
-    return MOCK_SERVICES.filter(s => 
+    return services.filter(s => 
       s.name.toLowerCase().includes(lowerSearch) || 
-      s.categoryName.toLowerCase().includes(lowerSearch)
+      (s.categoryName && s.categoryName.toLowerCase().includes(lowerSearch))
     );
-  }, [searchText]);
+  }, [searchText, services]);
 
-  // 2. Formatadores
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
@@ -38,16 +39,16 @@ export default function ServicosScreen() {
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   };
 
-  // 3. Ações
   const handleNewService = () => {
     router.push('/(main)/(stack)/novo-servico' as any);
   };
 
   const handleEditService = (id: string) => {
-    console.log('Editar serviço:', id);
+    // Roteamento dinâmico passando o ID para a próxima tela
+    router.push(`/(main)/(stack)/servicos/${id}` as any);
   };
 
-  const renderItem = useCallback(({ item }: { item: ServiceDTO }) => {
+  const renderItem = useCallback(({ item }: { item: ServiceResponseDTO }) => {
     return (
       <Pressable 
         style={styles.card}
@@ -58,7 +59,7 @@ export default function ServicosScreen() {
           
           <View style={styles.metaRow}>
             <View style={styles.categoryBadge}>
-              <Text style={styles.categoryText}>{item.categoryName}</Text>
+              <Text style={styles.categoryText}>{item.categoryName || 'Geral'}</Text>
             </View>
             <View style={styles.dotSeparator} />
             <Ionicons name="time-outline" size={td(14)} color="#64748B" />
@@ -74,13 +75,20 @@ export default function ServicosScreen() {
     );
   }, []);
 
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#FF7A00" />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView 
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Stack.Screen 
-      options={{ headerShown: false }} />
+      <Stack.Screen options={{ headerShown: false }} />
       
       <SearchHeaderScreens
         title="Meus Serviços"
@@ -92,25 +100,33 @@ export default function ServicosScreen() {
       />
 
       <View style={styles.listContainer}>
-        <FlashList
-          data={filteredServices}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          extraData={searchText}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          ListEmptyComponent={
+        {isError ? (
             <View style={styles.emptyContainer}>
-              <Ionicons name="cut-outline" size={td(48)} color="#E2E8F0" />
-              <Text style={styles.emptyTitle}>Nenhum serviço encontrado</Text>
-              <Text style={styles.emptySubtitle}>
-                {searchText ? 'Revise os termos da sua busca.' : 'Adicione os serviços que sua loja oferece para começar a agendar.'}
-              </Text>
+                <Text style={styles.emptyTitle}>Erro ao carregar serviços</Text>
             </View>
-          }
-        />
+        ) : (
+            <FlashList
+                data={filteredServices}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                extraData={searchText}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                refreshing={isRefetching}
+                onRefresh={refetch}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                    <Ionicons name="cut-outline" size={td(48)} color="#E2E8F0" />
+                    <Text style={styles.emptyTitle}>Nenhum serviço encontrado</Text>
+                    <Text style={styles.emptySubtitle}>
+                        {searchText ? 'Revise os termos da sua busca.' : 'Adicione os serviços que sua loja oferece para começar a agendar.'}
+                    </Text>
+                    </View>
+                }
+            />
+        )}
       </View>
 
       <Pressable style={styles.fab} onPress={handleNewService}>
@@ -172,7 +188,7 @@ const styles = StyleSheet.create({
   },
 
   categoryBadge: {
-    backgroundColor:Colors.corButtonDisable,
+    backgroundColor:Colors.corContainer,
     paddingHorizontal: l(8),
     paddingVertical: a(3),
     borderRadius: td(5),
