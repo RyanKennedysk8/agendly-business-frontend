@@ -8,9 +8,22 @@ export interface ServiceResponseDTO {
   isHomeService: boolean;
   isPetService: boolean;
   categoryName: string;
+  categoryId: string;
+  employeeIds?:string[];
 }
 
-  export interface OperatingHourDTO {
+
+export interface ServiceRequestDTO {
+  name: string;
+  price: number;
+  durationInMinutes: number;
+  categoryId?: string | null; 
+  employeeIds?: string[];     
+  isHomeService: boolean;
+  isPetService: boolean;
+} 
+
+export interface OperatingHourDTO {
     daysOfWeek: string[];
     openingTime: string;  
     closingTime: string;  

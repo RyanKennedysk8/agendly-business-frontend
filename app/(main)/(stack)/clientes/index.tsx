@@ -1,17 +1,15 @@
 // app/(main)/(tabs)/clientes/index.tsx
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-
 import { l, a, td } from '@/constants/responsive';
 import { Colors } from '@/colors/color';
 import { fonts } from '@/assets/fonts/fonts';
 import { ClientsDTO, MOCK_CLIENTS } from '@/mocks/clientes';
 import { SearchHeaderScreens } from '@/components/layout/header';
-import { ErrorState } from '@/components/shared/ErrorState';
 import { EmptyList } from '@/components/shared/EmptyList';
 
 
@@ -47,22 +45,12 @@ export default function ClientesScreen() {
   };
 
   const renderItem = useCallback(({ item }: { item: ClientsDTO }) => {
-    const initials = item.name
-      .split(' ')
-      .slice(0, 2)
-      .map(n => n[0])
-      .join('')
-      .toUpperCase();
-  
+
     return (
       <Pressable
         style={styles.card}
         onPress={() => handleEditCustomer(item.id)}
       >
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials}</Text>
-        </View>
-  
         <View style={styles.infoContainer}>
           <Text style={styles.customerName} numberOfLines={1}>
             {item.name}
@@ -72,20 +60,31 @@ export default function ClientesScreen() {
             {item.phone}
           </Text>
         </View>
-  
-        <View style={styles.metaContainer}>
-          <Text style={styles.metaLabel}>Última visita</Text>
-          <Text style={styles.metaValue}>
-            {item.lastVisit || 'Nunca'}
-          </Text>
-        </View>
-  
-        <View style={styles.chevronWrapper}>
-          <Ionicons
-            name="chevron-forward"
-            size={td(16)}
-            color="#CBD5E1"
-          />
+
+        <View style={{flexDirection:"row", gap:l(5)}}>
+          <TouchableOpacity style={styles.boxHandleCLick}>
+            <Ionicons
+              name="logo-whatsapp"
+              size={td(16)}
+              color={Colors.corTextSecondary}
+            />
+          </TouchableOpacity >
+
+          <TouchableOpacity  style={styles.boxHandleCLick}>
+            <Ionicons
+              name="create-outline"
+              size={td(16)}
+              color={Colors.corTextSecondary}
+            />
+          </TouchableOpacity >
+
+          <TouchableOpacity  style={styles.boxHandleCLick}>
+            <Ionicons
+              name="ellipsis-vertical"
+              size={td(16)}
+              color={Colors.corTextSecondary}
+            />
+          </TouchableOpacity >
         </View>
       </Pressable>
     );
@@ -103,7 +102,7 @@ export default function ClientesScreen() {
 
       <SearchHeaderScreens
         title="Meus Clientes"
-        placeHolder='Buscar por nome ou telefone...'
+        placeHolder='Pesquisar cliente...'
         onBack={() => router.back()}
         filtered={filteredClients.length}
         searchValue={searchText}
@@ -144,15 +143,17 @@ const styles = StyleSheet.create({
     flex: 1
   },
   listContent: {
-    paddingBottom: a(100),
+    paddingBottom: a(40),
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: l(20),
-    paddingVertical: a(15),
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    backgroundColor:Colors.corBoxSearch,
+    borderRadius:td(12),
+    marginHorizontal: l(10),
+    marginBottom: a(5),
+    paddingHorizontal:l(10),
+    paddingVertical:a(10)
   },
   separator: {
     height: 0,
@@ -176,34 +177,30 @@ const styles = StyleSheet.create({
 
   infoContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     paddingRight: l(12),
   },
 
   customerName: {
-    fontSize: td(15),
+    fontSize: td(16),
     fontFamily: fonts?.robotoMedium,
     color: Colors.corText,
-    marginBottom: a(4),
+    marginBottom: a(5),
   },
 
   customerPhone: {
-    fontSize: td(13),
+    fontSize: td(12),
     fontFamily: fonts?.robotoRegular,
-    color: Colors.corTextLight,
+    color: Colors.corTextSecondary,
   },
 
-  metaContainer: {
-    alignItems: 'flex-end',
-    marginRight: l(12),
-    minWidth: l(72),
-  },
-
-  metaLabel: {
-    fontSize: td(11),
-    fontFamily: fonts?.robotoRegular,
-    color: Colors.corTextLight,
-    marginBottom: a(2),
+  boxHandleCLick: {
+    justifyContent:"center",
+    alignItems:"center",
+    backgroundColor:Colors.corButtonSearch,
+    paddingVertical:a(20),
+    paddingHorizontal:l(10),
+    borderRadius:td(8),
   },
 
   metaValue: {
@@ -211,12 +208,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts?.robotoMedium,
     color: Colors.corTextStrong,
   },
-
-  chevronWrapper: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
   fab: {
     position: 'absolute',
     bottom: a(24),
@@ -225,7 +216,7 @@ const styles = StyleSheet.create({
     height: td(54),
     borderRadius: td(27),
 
-    backgroundColor: Colors.corButton,
+    backgroundColor: Colors.corScreen ,
 
     justifyContent: 'center',
     alignItems: 'center',

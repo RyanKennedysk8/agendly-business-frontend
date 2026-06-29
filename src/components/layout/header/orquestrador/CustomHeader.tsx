@@ -48,7 +48,7 @@ export function CustomHeader({ options }: NativeStackHeaderProps) {
         </View>
       );
 
-    case 'headerScheduling':
+    case 'headerScheduling': 
       return (
         <View style={[styles.safeAreaWhite, { paddingTop: statusBarHeights }]}>
           <SchedulingHeader onBack={router.back} title={title} />

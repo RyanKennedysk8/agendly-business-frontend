@@ -1,16 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '@/services/api';
-
-// Interface idêntica ao seu DTO do Java
-export interface ServiceResponseDTO {
-  id: string;
-  name: string;
-  price: number;
-  durationInMinutes: number;
-  isHomeService: boolean;
-  isPetService: boolean;
-  categoryName: string;
-}
+import { ServiceResponseDTO } from '@/types/company';
 
 // A páginação do Spring devolve os dados dentro do array "content"
 interface SpringPageResponse {

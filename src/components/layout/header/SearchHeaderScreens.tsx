@@ -30,14 +30,15 @@ export const SearchHeaderScreens = ({
     <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>
       
       <View style={styles.topRow}>
-        <TouchableOpacity onPress={onBack} style={styles.btnBack} hitSlop={15}>
-          <Ionicons name="arrow-back" size={td(22)} color="#0F172A" />
-        </TouchableOpacity>
+        <View style={{flexDirection:"row"}}>
+          <TouchableOpacity onPress={onBack} style={styles.btnBack}>
+            <Ionicons name="arrow-back" size={td(24)} color="#0F172A" />
+          </TouchableOpacity>
 
-        <View pointerEvents="none" style={styles.titleContainer}>
-          <Text numberOfLines={1} style={styles.title}>{title}</Text>
+          <View style={styles.titleContainer}>
+            <Text numberOfLines={1} style={styles.title}>{title}</Text>
+          </View>
         </View>
-
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{filtered}</Text>
         </View>
@@ -48,13 +49,13 @@ export const SearchHeaderScreens = ({
           <Ionicons
             name="search"
             size={td(17)}
-            color={Colors.placeholder}
+            color={Colors.corTextSearch}
           />
 
           <TextInput
             style={styles.searchInput}
             placeholder={placeHolder}
-            placeholderTextColor={Colors.placeholder}
+            placeholderTextColor={Colors.corTextSearch}
             value={searchValue}
             onChangeText={onSearchChange}
             autoCorrect={false}
@@ -69,7 +70,7 @@ export const SearchHeaderScreens = ({
               <Ionicons
                 name="close-circle"
                 size={td(18)}
-                color="#CBD5E1"
+                color={Colors.gray}
               />
             </TouchableOpacity>
           )}
@@ -82,28 +83,21 @@ export const SearchHeaderScreens = ({
 
 const styles = StyleSheet.create({
   headerWrapper: {
-    backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border
+    backgroundColor: Colors.white
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: l(20),
-    height: a(44),
-    position: 'relative',
+    paddingHorizontal: l(15),
+    height: a(44)
   },
   btnBack: {
     justifyContent: 'center',
     alignItems: 'flex-start',
-    zIndex: 2,
-    width: td(40),
+    paddingRight:l(10)
   },
   titleContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -118,28 +112,25 @@ const styles = StyleSheet.create({
     height: td(28),
     paddingHorizontal: td(8),
     borderRadius: td(14),
-    backgroundColor: Colors.corButtonDisable, 
+    backgroundColor: Colors.corContainer, 
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 2,
   },
   badgeText: {
     fontSize: td(14),
     fontFamily: fonts?.robotoBold || 'System',
-    color: Colors.corButton,
+    color: Colors.corText,
   },
   searchRow: {
-    paddingHorizontal: l(20),
+    paddingHorizontal: l(10),
   },
 
   searchInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: a(40),
-    backgroundColor: '#F8FAFC',
+    height: a(30),
+    backgroundColor: Colors.corBoxSearch,
     borderRadius: td(10),
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
     paddingHorizontal: l(12),
     marginBottom:a(10)
   },
@@ -148,7 +139,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: l(8),
     fontSize: td(14),
-    fontFamily: fonts?.robotoRegular || 'System',
-    color: '#0F172A',
+    fontFamily: fonts?.robotoRegular,
+    color:Colors.corText
   },
 });

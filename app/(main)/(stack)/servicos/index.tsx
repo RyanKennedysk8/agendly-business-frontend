@@ -1,6 +1,6 @@
 // app/(main)/(stack)/servicos/index.tsx
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
@@ -8,7 +8,8 @@ import { l, a, td } from '@/constants/responsive';
 import { fonts } from '@/assets/fonts/fonts';
 import { SearchHeaderScreens } from '@/components/layout/header';
 import { Colors } from '@/colors/color';
-import { useCompanyServices, ServiceResponseDTO } from '@/hooks/useCompanyServices';
+import { useCompanyServices } from '@/hooks/useCompanyServices';
+import { ServiceResponseDTO } from '@/types/company';
 
 export default function ServicosScreen() {
   const router = useRouter();
@@ -40,14 +41,17 @@ export default function ServicosScreen() {
   };
 
   const handleNewService = () => {
-    router.push('/(main)/(stack)/novo-servico' as any);
+    router.push('/(main)/(stack)/servicos/novo-servico' as any);
   };
 
   const handleEditService = (id: string) => {
-    // Roteamento dinâmico passando o ID para a próxima tela
-    router.push(`/(main)/(stack)/servicos/${id}` as any);
+    // Agora apontamos para o formulário que acabamos de criar, passando o ID do serviço
+    router.push({
+      pathname: '/(main)/(stack)/servicos/novo-servico',
+      params: { id }
+    } as any);
   };
-
+ 
   const renderItem = useCallback(({ item }: { item: ServiceResponseDTO }) => {
     return (
       <Pressable 
@@ -58,19 +62,31 @@ export default function ServicosScreen() {
           <Text style={styles.serviceName} numberOfLines={1}>{item.name}</Text>
           
           <View style={styles.metaRow}>
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryText}>{item.categoryName || 'Geral'}</Text>
-            </View>
-            <View style={styles.dotSeparator} />
-            <Ionicons name="time-outline" size={td(14)} color="#64748B" />
-            <Text style={styles.durationText}>{formatDuration(item.durationInMinutes)}</Text>
+            <Text style={styles.categoryText}>{formatDuration(item.durationInMinutes)}</Text>
+            <Text style={styles.separator}>-</Text>
+            <Text style={styles.categoryText}>{formatCurrency(item.price)}</Text>
           </View>
         </View>
 
-        <View style={styles.priceContainer}>
-          <Text style={styles.priceText}>{formatCurrency(item.price)}</Text>
-          <Ionicons name="chevron-forward" size={td(18)} color="#CBD5E1" />
+        <View style={{flexDirection:"row", gap:l(5)}}>
+          <TouchableOpacity style={styles.boxHandleCLick}>
+            <Ionicons
+              name="create-outline"
+              size={td(16)}
+              color={Colors.corTextSecondary}
+            />
+          </TouchableOpacity >
+        
+          <TouchableOpacity  style={styles.boxHandleCLick}>
+            <Ionicons
+              name="trash-outline"
+              size={td(16)}
+              color={Colors.corTextSecondary}
+            />
+          </TouchableOpacity >
         </View>
+
+        
       </Pressable>
     );
   }, []);
@@ -113,7 +129,6 @@ export default function ServicosScreen() {
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
-                ItemSeparatorComponent={() => <View style={styles.separator} />}
                 refreshing={isRefetching}
                 onRefresh={refetch}
                 ListEmptyComponent={
@@ -154,19 +169,15 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-
-    backgroundColor: '#FFFFFF',
-
-    paddingHorizontal: l(20),
-    paddingVertical: a(16),
-
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    backgroundColor:Colors.corBoxSearch,
+    borderRadius:td(12),
+    marginHorizontal: l(10),
+    marginBottom: a(5),
+    paddingHorizontal:l(10),
+    paddingVertical:a(10)
   },
 
   separator: {
-    height: 0,
   },
 
   infoContainer: {
@@ -174,17 +185,26 @@ const styles = StyleSheet.create({
     paddingRight: l(14),
   },
 
+  boxHandleCLick: {
+    justifyContent:"center",
+    alignItems:"center",
+    backgroundColor:Colors.corButtonSearch,
+    paddingVertical:a(20),
+    paddingHorizontal:l(10),
+    borderRadius:td(8),
+  },
+
   serviceName: {
-    fontSize: td(15.5),
-    fontFamily: fonts?.robotoMedium || 'System',
-    color: '#0F172A',
-    marginBottom: a(6),
+    fontSize: td(16),
+    fontFamily: fonts?.robotoMedium,
+    color:Colors.corText,
+    marginBottom: a(5),
   },
 
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: l(8),
+    gap: l(4),
   },
 
   categoryBadge: {
@@ -195,9 +215,9 @@ const styles = StyleSheet.create({
   },
 
   categoryText: {
-    fontSize: td(11),
-    fontFamily: fonts?.robotoMedium || 'System',
-    color: Colors.corTextStrong,
+    fontSize: td(12),
+    fontFamily: fonts?.robotoRegular,
+    color: Colors.corText,
   },
 
   dotSeparator: {
@@ -221,9 +241,9 @@ const styles = StyleSheet.create({
   },
 
   priceText: {
-    fontSize: td(15),
-    fontFamily: fonts?.robotoMedium || 'System',
-    color: Colors.success,
+    fontSize: td(12),
+    fontFamily: fonts?.robotoRegular,
+    color: Colors.corText,
   },
 
   chevronWrapper: {
@@ -263,7 +283,7 @@ const styles = StyleSheet.create({
     height: td(54),
     borderRadius: td(27),
 
-    backgroundColor: '#FF7A00',
+    backgroundColor: Colors.corScreen,
 
     justifyContent: 'center',
     alignItems: 'center',

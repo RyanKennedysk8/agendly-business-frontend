@@ -60,8 +60,7 @@ function InitialLayout() {
   return (
     <Stack 
       screenOptions={{ 
-        header: (props: NativeStackHeaderProps) => <CustomHeader {...props} />,
-        headerShown: false // Por padrão escondemos para deixar as telas controlarem, mas o CustomHeader está engatilhado
+        header: (props: NativeStackHeaderProps) => <CustomHeader {...props} />
       } as any} 
     />
   );

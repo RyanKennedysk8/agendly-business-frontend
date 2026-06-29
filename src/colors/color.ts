@@ -3,6 +3,8 @@ export type ColorPalette = {
     corScreen: string;
     corScreenDisable:string;
     corContainer:string;
+    corBoxSearch:string;
+    corButtonSearch:string;
     corButton: string;
     corButtonDisable:string,
     corButtonOff:string;
@@ -10,6 +12,7 @@ export type ColorPalette = {
     corTextSecondary:string,
     corTextLight:string,
     corTextStrong:string,
+    corTextSearch:string,
     transparente:string;
     semiTransparente:string; 
     placeholder: string;
@@ -36,7 +39,9 @@ export type ColorPalette = {
     corScreenDisable:'rgba(17, 24, 39, 0.5)',
   
     corContainer:"#efefef",
-    
+    corBoxSearch:"#F5F5F5",
+    corButtonSearch:"#E3E3E3",
+
     corButton: '#FF7A00',
     corButtonDisable: '#FFF7ED',
     corButtonOff:'#cccccc',
@@ -45,6 +50,7 @@ export type ColorPalette = {
     corTextSecondary:"rgba(38,38,38,0.7)",
     corTextLight:'#64748B',
     corTextStrong:'#475569',
+    corTextSearch:"#B9B8BD",
   
     transparente:"#00000000",
     semiTransparente:"rgba(0,0,0,0.6)",
