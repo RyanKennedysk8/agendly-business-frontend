@@ -11,16 +11,15 @@ import { fonts } from '@/assets/fonts/fonts';
 interface AgendaHeaderProps {
     selectedDate: Date;
     viewMode: ViewMode;
-    onChangeViewMode: (mode: 'DAY' | 'THREE_DAYS' | 'WEEK' | 'MONTH', date?: Date) => void;
+    onChangeViewMode: (mode: 'DAY' | 'WEEK' | 'MONTH', date?: Date) => void;
     visibleDays: Date[];
-    onOpenMonthPicker: () => void; // Gatilho para abrir o modal de seleção de mês no futuro
+    onOpenMonthPicker: () => void;
     onDayPress?: (date: Date) => void;
 
 }
 
 const VIEW_OPTIONS: { label: string; value: ViewMode }[] = [
     { label: 'Dia', value: 'DAY' },
-    { label: '3 Dias', value: 'THREE_DAYS' },
     { label: 'Semana', value: 'WEEK' },
     { label: 'Mês', value: 'MONTH' },
 ];

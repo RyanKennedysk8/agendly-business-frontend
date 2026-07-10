@@ -1,6 +1,6 @@
 // app/(main)/(stack)/servicos/index.tsx
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
@@ -10,10 +10,14 @@ import { SearchHeaderScreens } from '@/components/layout/header';
 import { Colors } from '@/colors/color';
 import { useCompanyServices } from '@/hooks/useCompanyServices';
 import { ServiceResponseDTO } from '@/types/company';
+import { useServiceMutations } from '@/hooks/useServiceMutations';
+import { FabCustom } from '@/components/shared/FabCustom';
 
 export default function ServicosScreen() {
   const router = useRouter();
   const [searchText, setSearchText] = useState('');
+
+  const { deleteService } = useServiceMutations();
 
   //  Consumindo a API
   const { data: services = [], isLoading, isError, refetch, isRefetching } = useCompanyServices();
@@ -45,12 +49,34 @@ export default function ServicosScreen() {
   };
 
   const handleEditService = (id: string) => {
-    // Agora apontamos para o formulário que acabamos de criar, passando o ID do serviço
     router.push({
       pathname: '/(main)/(stack)/servicos/novo-servico',
       params: { id }
     } as any);
   };
+
+  const handleDelete = (id:string) => {
+      Alert.alert(
+          "Excluir Serviço",
+          "Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.",
+          [
+              { text: "Cancelar", style: "cancel" },
+              { 
+                  text: "Excluir", 
+                  style: "destructive", 
+                  onPress: async () => {
+                      try {
+                          await deleteService.mutateAsync(id as string);
+                      } catch (error) {
+                          console.error("Falha ao excluir", error);
+                      }
+                  } 
+              }
+          ]
+      );
+  };
+
+ 
  
   const renderItem = useCallback(({ item }: { item: ServiceResponseDTO }) => {
     return (
@@ -58,6 +84,10 @@ export default function ServicosScreen() {
         style={styles.card}
         onPress={() => handleEditService(item.id)}
       >
+        <View style={{paddingRight:l(10)}}>
+
+        </View> 
+
         <View style={styles.infoContainer}>
           <Text style={styles.serviceName} numberOfLines={1}>{item.name}</Text>
           
@@ -69,7 +99,7 @@ export default function ServicosScreen() {
         </View>
 
         <View style={{flexDirection:"row", gap:l(5)}}>
-          <TouchableOpacity style={styles.boxHandleCLick}>
+          <TouchableOpacity style={styles.boxHandleCLick} onPress={() => handleEditService(item.id)}>
             <Ionicons
               name="create-outline"
               size={td(16)}
@@ -77,12 +107,12 @@ export default function ServicosScreen() {
             />
           </TouchableOpacity >
         
-          <TouchableOpacity  style={styles.boxHandleCLick}>
+          <TouchableOpacity  style={styles.boxHandleCLick} onPress={() => handleDelete(item.id)}>
             <Ionicons
               name="trash-outline"
               size={td(16)}
               color={Colors.corTextSecondary}
-            />
+            /> 
           </TouchableOpacity >
         </View>
 
@@ -107,13 +137,17 @@ export default function ServicosScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       
       <SearchHeaderScreens
-        title="Meus Serviços"
+        title="Serviços"
         placeHolder='Buscar por serviço, categoria...'
         onBack={() => router.back()}
         filtered={filteredServices.length} 
         searchValue={searchText}
         onSearchChange={setSearchText}
       />
+      <View style={styles.boxAddCategory}>
+          <Ionicons name="add-outline" size={td(24)} color={Colors.corText}/> 
+          <Text style={styles.txtAddCategory} >Nova categoria</Text>
+      </View>
 
       <View style={styles.listContainer}>
         {isError ? (
@@ -131,22 +165,21 @@ export default function ServicosScreen() {
                 keyboardShouldPersistTaps="handled"
                 refreshing={isRefetching}
                 onRefresh={refetch}
+                keyboardDismissMode='on-drag'
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                    <Ionicons name="cut-outline" size={td(48)} color="#E2E8F0" />
-                    <Text style={styles.emptyTitle}>Nenhum serviço encontrado</Text>
-                    <Text style={styles.emptySubtitle}>
-                        {searchText ? 'Revise os termos da sua busca.' : 'Adicione os serviços que sua loja oferece para começar a agendar.'}
-                    </Text>
+                      <Ionicons name="cut-outline" size={td(48)} color="#E2E8F0" />
+                      <Text style={styles.emptyTitle}>Nenhum serviço encontrado</Text>
+                      <Text style={styles.emptySubtitle}>
+                          {searchText ? 'Revise os termos da sua busca.' : 'Adicione os serviços que sua loja oferece para começar a agendar.'}
+                      </Text>
                     </View>
                 }
             />
         )}
       </View>
 
-      <Pressable style={styles.fab} onPress={handleNewService}>
-        <Ionicons name="add" size={td(28)} color="#FFFFFF" />
-      </Pressable>
+      <FabCustom onPress={handleNewService} label='Novo serviço'/>
     </KeyboardAvoidingView>
   );
 }
@@ -169,12 +202,11 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor:Colors.corBoxSearch,
-    borderRadius:td(12),
     marginHorizontal: l(10),
-    marginBottom: a(5),
-    paddingHorizontal:l(10),
-    paddingVertical:a(10)
+    paddingHorizontal:l(5),
+    paddingVertical:a(10),
+    borderBottomColor:Colors.border,
+    borderBottomWidth:1
   },
 
   separator: {
@@ -184,21 +216,34 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: l(14),
   },
-
+  boxAddCategory:{
+    flexDirection:"row", 
+    width:"100%", 
+    justifyContent:"center", 
+    alignItems:"center", 
+    paddingBottom:a(15), 
+    paddingVertical:a(5),
+    borderBottomWidth:1,
+    borderBottomColor:Colors.border
+  },
+  txtAddCategory:{
+    fontSize: td(14),
+    fontFamily: fonts?.robotoBold,
+    color:Colors.corText
+  },
   boxHandleCLick: {
     justifyContent:"center",
     alignItems:"center",
     backgroundColor:Colors.corButtonSearch,
-    paddingVertical:a(20),
+    paddingVertical:a(15),
     paddingHorizontal:l(10),
     borderRadius:td(8),
   },
 
   serviceName: {
     fontSize: td(16),
-    fontFamily: fonts?.robotoMedium,
+    fontFamily: fonts?.robotoRegular,
     color:Colors.corText,
-    marginBottom: a(5),
   },
 
   metaRow: {
@@ -217,7 +262,7 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: td(12),
     fontFamily: fonts?.robotoRegular,
-    color: Colors.corText,
+    color: Colors.corTextSecondary,
   },
 
   dotSeparator: {

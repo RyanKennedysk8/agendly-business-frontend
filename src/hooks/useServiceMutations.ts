@@ -27,6 +27,12 @@ export const useServiceMutations = () => {
             queryClient.invalidateQueries({ queryKey: ['company-services'] });
         },
     });
+    const deleteService = useMutation({
+        mutationFn: async (id: string) => {
+            await api.delete(`/services/my-company/${id}`);
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['company-services'] }),
+    });
 
-    return { createService, updateService };
+    return { createService, updateService, deleteService};
 };

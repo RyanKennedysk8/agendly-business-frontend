@@ -50,7 +50,7 @@ export type ColorPalette = {
     corTextSecondary:"rgba(38,38,38,0.7)",
     corTextLight:'#64748B',
     corTextStrong:'#475569',
-    corTextSearch:"#B9B8BD",
+    corTextSearch:"#8F8F8F",
   
     transparente:"#00000000",
     semiTransparente:"rgba(0,0,0,0.6)",

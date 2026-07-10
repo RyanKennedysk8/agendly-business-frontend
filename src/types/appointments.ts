@@ -83,6 +83,12 @@ canReview: boolean;
 priceAtBooking: number; 
 createdAt:string;  
 notes?:string;
+
+// Detalhes do cliente
+clientId?: string;
+clientName?: string;
+clientAvatarUrl?: string;
+
 // Detalhes do serviço
 serviceId: string; 
 serviceName: string;

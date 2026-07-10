@@ -4,14 +4,13 @@ import { getGlobalWorkBounds } from '../../../utils/workTimeEngine';
 import { a, l, td } from '@/constants/responsive';
 import { Colors } from '@/colors/color';
 import { fonts } from '@/assets/fonts/fonts';
+import { AXIS_WIDTH } from '../StaffDailyView';
 
-// Executa a leitura dinâmica dos limites baseada no seu COMPANY_MOCK
 const { startHour, endHour } = getGlobalWorkBounds();
-export const TOP_PADDING_MINUTES = 15;
+export const TOP_PADDING_MINUTES = 0;
 
-const TOTAL_GRID_HEIGHT = (
-    ((endHour - startHour) * 60)
-    + TOP_PADDING_MINUTES ) * MINUTE_HEIGHT;
+const TOTAL_GRID_HEIGHT = (((endHour - startHour) * 60) ) * MINUTE_HEIGHT;
+
 
 export const calendarBaseStyles = StyleSheet.create({
     container: {
@@ -22,7 +21,7 @@ export const calendarBaseStyles = StyleSheet.create({
         flexDirection: 'row',
     },
     timeAxisContainer: {
-        width: l(60),
+        width: AXIS_WIDTH,
         backgroundColor: Colors.white,
         zIndex: 2,
         height: TOTAL_GRID_HEIGHT,
@@ -30,23 +29,23 @@ export const calendarBaseStyles = StyleSheet.create({
     timeSlotHour: {
         position: 'absolute',
         width: '100%',
-        textAlign: 'center',
-        fontSize: td(12),
-        color: Colors.corText,
+        textAlign: 'right',
+        paddingRight:l(5),
+        fontSize: td(8), 
+        color: Colors.corTextSearch,
         fontFamily: fonts.robotoMedium,
-        transform: [{ translateY: -td(6) }],
     },
     timeSlotMinute: {
         position: 'absolute',
         width: '100%',
-        textAlign: 'center',
-        fontSize: td(10), 
-        color: Colors.corTextSecondary,
-        fontFamily: fonts.robotoRegular,
-        transform: [{ translateY: -td(6) }]
+        textAlign: 'right',
+        fontSize: td(8), 
+        paddingRight:l(5),
+        color: Colors.corTextSearch,
+        fontFamily: fonts.robotoMedium,
     },
 
-    // -----------------------------------------
+    // -------------------TIME GRID----------------------
 
     gridContainer: {
         flex: 1,

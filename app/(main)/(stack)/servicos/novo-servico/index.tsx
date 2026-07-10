@@ -1,96 +1,89 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Switch, Pressable, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, TextInput, Switch, Pressable, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { l, a, td } from '@/constants/responsive';
 import { fonts } from '@/assets/fonts/fonts';
 import { Colors } from '@/colors/color';
-import { useServiceMutations } from '@/hooks/useServiceMutations';
+import { useServiceMutations} from '@/hooks/useServiceMutations';
 import { useCompanyCategories } from '@/hooks/useCompanyCategories';
 import { useCompanyEmployees } from '@/hooks/useCompanyEmployees';
+import { useCompanyServices } from '@/hooks/useCompanyServices';
 import { ServiceRequestDTO } from '@/types/company';
 import { BottomSheetSelect } from '@/components/shared/BottomSheetSelect';
-import { EditeProfileHeader } from '@/components/layout/header';
-import { useCompanyServices } from '@/hooks/useCompanyServices';
-
-const DURATION_OPTIONS = [
-    { id: '15', name: '15 minutos' },
-    { id: '30', name: '30 minutos' },
-    { id: '45', name: '45 minutos' },
-    { id: '60', name: '1 hora' },
-    { id: '75', name: '1h 15m' },
-    { id: '90', name: '1h 30m' },
-    { id: '120', name: '2 horas' },
-    { id: '150', name: '2h 30m' },
-    { id: '180', name: '3 horas' },
-];
+import { generateOptimizedDurations } from '@/utils/durationGenerator';
+import { DropdownSelect } from '@/components/shared/DropdownSelect';
 
 export default function NovoServicoScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams();
     const isEditing = !!id;
-    const onBack = () => router.back();
 
-    const { createService, updateService } = useServiceMutations();
+    const { createService, updateService, deleteService } = useServiceMutations();
     
-    // Requisições cacheadas (Background fetching)
-    const { data: categories = [] } = useCompanyCategories();
-    const { data: employees = [] } = useCompanyEmployees();
+    const { data: categoriesData = [] } = useCompanyCategories();
+    const { data: employeesData = [] } = useCompanyEmployees();
     const { data: services = [] } = useCompanyServices();
 
-    // Estados do Formulário
+    const durationOptions = useMemo(() => generateOptimizedDurations().map(d => ({ id: d.id, name: d.name })), []);
+    const categoryOptions = useMemo(() => categoriesData.map(c => ({ id: c.id, name: c.name })), [categoriesData]);
+    
+    const employeeOptions = useMemo(() => {
+        return [
+            { id: 'ALL', name: 'Todos (Padrão)' },
+            ...employeesData.map(e => ({ id: e.id, name: e.name }))
+        ];
+    }, [employeesData]);
+
     const [name, setName] = useState('');
     const [price, setPrice] = useState('');
-    const [duration, setDuration] = useState('');
+    const [durationId, setDurationId] = useState<string>(''); 
+    const [categoryId, setCategoryId] = useState<string | null>(null);
+    const [employeeIds, setEmployeeIds] = useState<string[]>(['ALL']); // Padrão
     const [isHomeService, setIsHomeService] = useState(false);
     const [isPetService, setIsPetService] = useState(false);
-    const [categoryId, setCategoryId] = useState<string | null>(null);
-    const [employeeIds, setEmployeeIds] = useState<string[]>([]);
 
-    // Estados de Controle dos Modais
-    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-    const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
-    const [isDurationModalOpen, setIsDurationModalOpen] = useState(false);
-    
-
-    // EFEITO DE PREENCHIMENTO: Roda apenas uma vez se for modo edição
     useEffect(() => {
         if (isEditing && id && services.length > 0) {
             const serviceToEdit = services.find(s => s.id === id);
             if (serviceToEdit) {
                 setName(serviceToEdit.name);
-                setDuration(serviceToEdit.durationInMinutes.toString());
+                setDurationId(serviceToEdit.durationInMinutes.toString());
                 setIsHomeService(serviceToEdit.isHomeService);
                 setIsPetService(serviceToEdit.isPetService);
                 if (serviceToEdit.categoryId) setCategoryId(serviceToEdit.categoryId);
-                if (serviceToEdit.employeeIds) setEmployeeIds(serviceToEdit.employeeIds);
                 
-                // Formata o preço vindo do banco (ex: 45.5 -> "45,50")
+                // Se no banco vier vazio/nulo, mapeamos para TODOS. Caso contrário, setamos os IDs.
+                if (!serviceToEdit.employeeIds || serviceToEdit.employeeIds.length === 0) {
+                    setEmployeeIds(['ALL']);
+                } else {
+                    setEmployeeIds(serviceToEdit.employeeIds);
+                }
+
                 setPrice(serviceToEdit.price.toFixed(2).replace('.', ','));
             }
         }
     }, [isEditing, id, services]);
 
-    // MÁSCARA FINANCEIRA: Formata de trás pra frente (ex: 1500 vira 15,00)
     const handlePriceChange = (text: string) => {
-        const rawText = text.replace(/\D/g, ''); // Remove tudo que não for número
-        if (!rawText) {
-            setPrice('');
-            return;
-        }
+        const rawText = text.replace(/\D/g, '');
+        if (!rawText) { setPrice(''); return; }
         const numericValue = (Number(rawText) / 100).toFixed(2);
         setPrice(numericValue.replace('.', ','));
     };
 
     const handleSave = async () => {
-        if (!name.trim() || !price || !duration) return;
+        if (!name.trim() || !price || !durationId) return;
+
+        // Se a opção selecionada for ALL, enviamos array vazio para o Backend
+        const payloadEmployeeIds = employeeIds.includes('ALL') ? [] : employeeIds;
 
         const payload: ServiceRequestDTO = {
             name: name.trim(),
             price: parseFloat(price.replace(',', '.')),
-            durationInMinutes: parseInt(duration, 10),
+            durationInMinutes: parseInt(durationId, 10),
             categoryId,
-            employeeIds,
+            employeeIds: payloadEmployeeIds,
             isHomeService,
             isPetService
         };
@@ -107,87 +100,107 @@ export default function NovoServicoScreen() {
         }
     };
 
-    const isPending = createService.isPending || updateService.isPending;
+    const handleDelete = () => {
+        Alert.alert(
+            "Excluir Serviço",
+            "Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.",
+            [
+                { text: "Cancelar", style: "cancel" },
+                { 
+                    text: "Excluir", 
+                    style: "destructive", 
+                    onPress: async () => {
+                        try {
+                            await deleteService.mutateAsync(id as string);
+                            router.back();
+                        } catch (error) {
+                            console.error("Falha ao excluir", error);
+                        }
+                    } 
+                }
+            ]
+        );
+    };
 
-    // Utilitários visuais para as labels dos botões
-    const selectedCategoryName = categories.find(c => c.id === categoryId)?.name || 'Nenhuma categoria';
-    const selectedDurationName = DURATION_OPTIONS.find(d => d.id === duration)?.name || (duration ? `${duration} min` : 'Selecione o tempo');
-    const selectedEmployeesText = employeeIds.length > 0 
-        ? `${employeeIds.length} selecionado(s)` 
-        : 'Todos (Padrão)';
+    const formatDurationForDisplay = (min: number) => {
+        if (min === 0) return 'Selecione o tempo';
+        const h = Math.floor(min / 60);
+        const m = min % 60;
+        return (h > 0 ? `${h}h ` : '') + (m > 0 ? `${m}min` : '').trim();
+    };
+
+    const isPending = createService.isPending || updateService.isPending || deleteService.isPending;
 
     return (
         <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <EditeProfileHeader
-            onBack={onBack}
-            title={isEditing ? 'Editar Serviço' : 'Novo Serviço'}/>
+            <Stack.Screen options={{ 
+                headerType:"custom",
+                headerTitle: isEditing ? 'Editar Serviço' : 'Novo Serviço',
+                headerRight: () => isEditing ? (
+                    <TouchableOpacity style={styles.headerRightIcon} onPress={handleDelete} disabled={isPending} hitSlop={15}>
+                        <Ionicons name="trash-outline" size={td(22)} color="#EF4444" />
+                    </TouchableOpacity>
+                ) : null
+            }as any} />
 
-            <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+            <ScrollView 
+            contentContainerStyle={styles.scrollContent} 
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            >
                 <View style={styles.inputGroup}>
                     <Text style={styles.label}>Nome do Serviço *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Ex: Corte Degrade"
-                        value={name}
-                        onChangeText={setName}
-                        placeholderTextColor={Colors.placeholder}
-                    />
+                    <TextInput style={styles.input} placeholder="Ex: Corte Degrade" value={name} onChangeText={setName} placeholderTextColor={Colors.placeholder} />
                 </View>
 
                 <View style={styles.row}>
                     <View style={[styles.inputGroup, { flex: 1, marginRight: l(10) }]}>
                         <Text style={styles.label}>Preço (R$) *</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="0,00"
-                            keyboardType="numeric"
-                            value={price}
-                            onChangeText={handlePriceChange} // Aplica a máscara aqui
-                            placeholderTextColor={Colors.placeholder}
+                        <TextInput 
+                        style={styles.input} 
+                        placeholder="0,00" 
+                        keyboardType="numeric" 
+                        value={price} 
+                        onChangeText={handlePriceChange} 
+                        placeholderTextColor={Colors.placeholder} 
+                        
                         />
                     </View>
 
-                    <View style={[styles.inputGroup, { flex: 1 }]}>
-                        <Text style={styles.label}>Duração *</Text>
-                        <TouchableOpacity style={styles.selectButton} activeOpacity={0.7} onPress={() => setIsDurationModalOpen(true)}>
-                            <Text style={[styles.selectButtonText, duration ? styles.selectButtonTextActive : {}]}>
-                                {selectedDurationName}
-                            </Text>
-                            <Ionicons name="time-outline" size={td(20)} color="#64748B" />
-                        </TouchableOpacity>
+                    <View style={[{ flex: 1 }]}>
+                        <DropdownSelect
+                            label="Duração *"
+                            options={durationOptions}
+                            selectedValue={durationId}
+                            onSelect={setDurationId}
+                            placeholder="Tempo"
+                        />
                     </View>
                 </View>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Categoria do Cardápio</Text>
-                    <TouchableOpacity style={styles.selectButton} activeOpacity={0.7} onPress={() => setIsCategoryModalOpen(true)}>
-                        <Text style={[styles.selectButtonText, categoryId ? styles.selectButtonTextActive : {}]}>
-                            {selectedCategoryName}
-                        </Text>
-                        <Ionicons name="chevron-down" size={td(20)} color="#64748B" />
-                    </TouchableOpacity>
-                </View>
+                <DropdownSelect
+                    label="Categoria do Cardápio"
+                    options={categoryOptions}
+                    selectedValue={categoryId}
+                    onSelect={setCategoryId}
+                    placeholder="Selecione a categoria"
+                />
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Profissionais Habilitados</Text>
-                    <TouchableOpacity style={styles.selectButton} activeOpacity={0.7} onPress={() => setIsEmployeeModalOpen(true)}>
-                        <Text style={[styles.selectButtonText, employeeIds.length > 0 ? styles.selectButtonTextActive : {}]}>
-                            {selectedEmployeesText}
-                        </Text>
-                        <Ionicons name="people-outline" size={td(20)} color="#64748B" />
-                    </TouchableOpacity>
-                </View>
+                <DropdownSelect
+                    label="Profissionais Habilitados"
+                    options={employeeOptions}
+                    multiSelect={true}
+                    selectedValues={employeeIds}
+                    onMultiSelect={setEmployeeIds}
+                    placeholder="Selecionar profissionais"
+                />
 
                 <View style={styles.switchGroup}>
                     <View style={styles.switchTextContainer}>
                         <Text style={styles.switchTitle}>Atendimento em Domicílio</Text>
                         <Text style={styles.switchSubtitle}>O profissional vai até o endereço do cliente.</Text>
                     </View>
-                    <Switch
-                        value={isHomeService}
-                        onValueChange={setIsHomeService}
-                        trackColor={{ true: Colors.corButton, false: Colors.corContainer }}
-                    />
+                    <Switch value={isHomeService} onValueChange={setIsHomeService} trackColor={{ true: '#FF7A00', false: '#E2E8F0' }} />
                 </View>
 
                 <View style={styles.switchGroup}>
@@ -195,86 +208,32 @@ export default function NovoServicoScreen() {
                         <Text style={styles.switchTitle}>Serviço para Pets</Text>
                         <Text style={styles.switchSubtitle}>Exige a seleção de um animal no agendamento.</Text>
                     </View>
-                    <Switch
-                        value={isPetService}
-                        onValueChange={setIsPetService}
-                        trackColor={{ true: Colors.corButton, false: Colors.corContainer }}
-                    />
+                    <Switch value={isPetService} onValueChange={setIsPetService} trackColor={{ true: '#FF7A00', false: '#E2E8F0' }} />
                 </View>
             </ScrollView>
 
             <View style={styles.footer}>
                 <Pressable 
-                    style={[styles.saveButton, (!name || !price || !duration) && styles.saveButtonDisabled]} 
+                    style={[styles.saveButton, (!name || !price || !durationId) && styles.saveButtonDisabled]} 
                     onPress={handleSave}
-                    disabled={isPending || !name || !price || !duration}
+                    disabled={isPending || !name || !price || !durationId}
                 >
-                    {isPending ? (
-                        <ActivityIndicator color="#FFFFFF" />
-                    ) : (
-                        <Text style={styles.saveButtonText}>Salvar Serviço</Text>
-                    )}
+                    {isPending ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.saveButtonText}>Salvar Serviço</Text>}
                 </Pressable>
             </View>
-
-            <BottomSheetSelect
-                isVisible={isCategoryModalOpen}
-                onClose={() => setIsCategoryModalOpen(false)}
-                title="Selecione a Categoria"
-                data={categories}
-                selectedIds={categoryId ? [categoryId] : []}
-                onSelect={(ids) => setCategoryId(ids[0] || null)}
-                multiSelect={false}
-            />
-
-            <BottomSheetSelect
-                isVisible={isEmployeeModalOpen}
-                onClose={() => setIsEmployeeModalOpen(false)}
-                title="Profissionais Habilitados"
-                data={employees}
-                selectedIds={employeeIds}
-                onSelect={setEmployeeIds}
-                multiSelect={true}
-            />
-
-            <BottomSheetSelect
-                isVisible={isDurationModalOpen}
-                onClose={() => setIsDurationModalOpen(false)}
-                title="Duração do Serviço"
-                data={DURATION_OPTIONS}
-                selectedIds={duration ? [duration] : []}
-                onSelect={(ids) => setDuration(ids[0] || '')}
-                multiSelect={false}
-            />
+            
         </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { 
-        flex: 1, 
-        paddingTop:30, 
-        backgroundColor: '#FFFFFF' 
-    },
-    scrollContent: { 
-        padding: l(20), 
-        paddingBottom: a(120) 
-    }, 
-    inputGroup: { 
-        marginBottom: a(20) 
-    },
-    row: { 
-        flexDirection: 'row', 
-        justifyContent: 'space-between' 
-    },
-    label: { 
-        fontSize: td(14), 
-        fontFamily: fonts?.robotoMedium || 'System', 
-        color: '#334155', 
-        marginBottom: a(8) 
-    },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
+    scrollContent: { padding: l(20), paddingBottom: a(120) },
+    inputGroup: { marginBottom: a(20) },
+    row: { flexDirection: 'row', justifyContent: 'space-between' },
+    label: { fontSize: td(14), fontFamily: fonts?.robotoMedium || 'System', color: '#334155', marginBottom: a(8) },
     input: { height: a(48), backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: td(10), paddingHorizontal: l(16), fontSize: td(15), color: '#0F172A' },
-    selectButton: { height: a(48), backgroundColor: Colors.corContainer, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: td(10), paddingHorizontal: l(16), flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    selectButton: { height: a(48), backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: td(10), paddingHorizontal: l(16), flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     selectButtonText: { fontSize: td(15), fontFamily: fonts?.robotoRegular || 'System', color: '#94A3B8' },
     selectButtonTextActive: { color: '#0F172A', fontFamily: fonts?.robotoMedium || 'System' },
     switchGroup: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: a(16), borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
@@ -284,5 +243,6 @@ const styles = StyleSheet.create({
     footer: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: l(20), backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#F1F5F9' },
     saveButton: { height: a(50), backgroundColor: '#FF7A00', borderRadius: td(12), justifyContent: 'center', alignItems: 'center' },
     saveButtonDisabled: { backgroundColor: '#CBD5E1' },
-    saveButtonText: { fontSize: td(16), fontFamily: fonts?.robotoBold || 'System', color: '#FFFFFF' }
+    saveButtonText: { fontSize: td(16), fontFamily: fonts?.robotoBold || 'System', color: '#FFFFFF' },
+    headerRightIcon:{width:td(50), justifyContent:"center", alignItems:"flex-end"}
 });

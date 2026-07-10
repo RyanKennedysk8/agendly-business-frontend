@@ -15,7 +15,7 @@ type SubProfileProps = {
 export const SubProfile = ({ title, onBack, iconRight, onPressRight }: SubProfileProps) => (
   <View style={styles.containerCategory}>
     <TouchableOpacity onPress={onBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-      <Ionicons name="arrow-back" size={td(20)} color={Colors.black} />
+      <Ionicons name="chevron-back-outline" size={td(24)} color={Colors.corText} />
     </TouchableOpacity>
     <Text style={styles.titleProfile}>{title}</Text>
     {iconRight ? (

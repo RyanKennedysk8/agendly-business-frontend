@@ -32,17 +32,18 @@ export const SearchHeaderScreens = ({
       <View style={styles.topRow}>
         <View style={{flexDirection:"row"}}>
           <TouchableOpacity onPress={onBack} style={styles.btnBack}>
-            <Ionicons name="arrow-back" size={td(24)} color="#0F172A" />
+            <Ionicons name="chevron-back-outline" size={td(24)} color={Colors.corText} />
           </TouchableOpacity>
 
           <View style={styles.titleContainer}>
             <Text numberOfLines={1} style={styles.title}>{title}</Text>
           </View>
-        </View>
+        </View> 
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{filtered}</Text>
         </View>
       </View>
+
 
       <View style={styles.searchRow}>
         <View style={styles.searchInputWrapper}>
@@ -102,9 +103,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: td(18),
-    fontFamily: fonts?.robotoBold || 'System',
-    color: '#0F172A',
+    fontSize: td(20),
+    fontFamily: fonts?.robotoBold,
+    color: Colors.corText,
     textAlign: 'center',
   },
   badge: {
@@ -129,10 +130,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: a(30),
-    backgroundColor: Colors.corBoxSearch,
+    backgroundColor: "#F0F0F0",
     borderRadius: td(10),
     paddingHorizontal: l(12),
-    marginBottom:a(10)
+    marginBottom:a(10),
+    borderWidth: 1,
+    borderColor: "#E3E3E3",
   },
 
   searchInput: {

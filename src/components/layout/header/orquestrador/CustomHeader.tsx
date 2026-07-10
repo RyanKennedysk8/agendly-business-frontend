@@ -32,7 +32,6 @@ export function CustomHeader({ options }: NativeStackHeaderProps) {
   const storeSearchParams = (options as any).storeSearchParams;
   const storeInfoParams = (options as any).storeInfoParams;
   const searchHeaderParams = (options as any).searchHeaderParams;
-  const homeHeaderParams = (options as any).homeHeaderParams;
   const subProfile = (options as any).subProfile;
   const colorIcon = (options as any).colorIcon;
   const headerRight = options.headerRight;

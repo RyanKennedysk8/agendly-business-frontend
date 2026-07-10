@@ -11,6 +11,7 @@ import { fonts } from '@/assets/fonts/fonts';
 import { ClientsDTO, MOCK_CLIENTS } from '@/mocks/clientes';
 import { SearchHeaderScreens } from '@/components/layout/header';
 import { EmptyList } from '@/components/shared/EmptyList';
+import { FabCustom } from '@/components/shared/FabCustom';
 
 
 export default function ClientesScreen() {
@@ -117,6 +118,7 @@ export default function ClientesScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled" 
+          keyboardDismissMode='on-drag'
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           ListEmptyComponent={
             <EmptyList message="Nenhum cliente encontrado" subMessage= {searchText ? 'Tente buscar com outros termos.' : 'Cadastre seu primeiro cliente para começar.'}/>
@@ -124,9 +126,7 @@ export default function ClientesScreen() {
         />
       </View>
 
-      <Pressable style={styles.fab} onPress={handleNewCustomer}>
-        <Ionicons name="add" size={td(28)} color="#FFFFFF" />
-      </Pressable>
+      <FabCustom onPress={handleNewCustomer} label='Novo cliente'/>
 
     </KeyboardAvoidingView>
     
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     justifyContent:"center",
     alignItems:"center",
     backgroundColor:Colors.corButtonSearch,
-    paddingVertical:a(20),
+    paddingVertical:a(15),
     paddingHorizontal:l(10),
     borderRadius:td(8),
   },

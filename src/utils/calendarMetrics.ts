@@ -1,6 +1,6 @@
 import { a } from "@/constants/responsive";
 
-export const HOUR_HEIGHT = a(120); 
+export const HOUR_HEIGHT = a(80); 
 export const MINUTE_HEIGHT = HOUR_HEIGHT / 60;
 
 /**

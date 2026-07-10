@@ -43,7 +43,7 @@ export const agendaHeaderStyles = StyleSheet.create({
     },
     tabButton: {
         paddingVertical: a(6),
-        paddingHorizontal: l(12),
+        paddingHorizontal: l(15),
         borderRadius: td(6)
     },
     tabButtonActive: {

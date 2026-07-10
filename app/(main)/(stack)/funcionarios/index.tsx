@@ -10,6 +10,7 @@ import { l, a, td } from '@/constants/responsive';
 import { fonts } from '@/assets/fonts/fonts';
 import { SearchHeaderScreens } from '@/components/layout/header';
 import { Colors } from '@/colors/color';
+import { FabCustom } from '@/components/shared/FabCustom';
 
 export interface EmployeeDTO {
   name: string;
@@ -106,6 +107,7 @@ export default function FuncionariosScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode='on-drag'
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
@@ -119,9 +121,7 @@ export default function FuncionariosScreen() {
         />
       </View>
 
-      <Pressable style={styles.fab} onPress={handleNewEmployee}>
-        <Ionicons name="add" size={td(28)} color="#FFFFFF" />
-      </Pressable>
+      <FabCustom onPress={handleNewEmployee} label='Novo Cliente'/>
     </KeyboardAvoidingView>
   );
 }

@@ -1,6 +1,7 @@
 import { AppointmentDetail } from '@/types/appointments';
-import { MINUTE_HEIGHT } from './calendarMetrics';
 import { DimensionValue } from 'react-native';
+// Certifique-se de que MINUTE_HEIGHT está sendo importado corretamente do seu arquivo de métricas
+import { MINUTE_HEIGHT } from './calendarMetrics'; 
 
 export type RenderableAppointment = AppointmentDetail & {
     layout: {
@@ -12,14 +13,41 @@ export type RenderableAppointment = AppointmentDetail & {
     };
 };
 
-export function processDayAppointments(appointments: AppointmentDetail[]): RenderableAppointment[] {
+export function processEmployeeAppointments(
+    appointments: any[], 
+    employeeId: string, 
+    targetDate: Date, 
+    startHour: number
+): RenderableAppointment[] {
     if (!appointments || appointments.length === 0) return [];
 
-    // Ordenação Cronológica (O(N log N))
-    const sorted = [...appointments].sort((a, b) => {
+    // 1. Filtro Duplo: Por Funcionário E pela Data Exata da Página (PagerView)
+    const targetYear = targetDate.getFullYear();
+    const targetMonth = targetDate.getMonth();
+    const targetDay = targetDate.getDate();
+
+    const employeeAppointments = appointments.filter(a => {
+        // Suporta tanto o DTO antigo (objeto aninhado) quanto o novo (ID direto)
+        const currentEmpId = a.employeeId || (a.employee && a.employee.id);
+        if (currentEmpId !== employeeId) return false;
+
+        const apptDate = new Date(a.startTime);
+        return (
+            apptDate.getFullYear() === targetYear &&
+            apptDate.getMonth() === targetMonth &&
+            apptDate.getDate() === targetDay
+        );
+    });
+
+    if (employeeAppointments.length === 0) return [];
+
+    // Ordenação Cronológica O(N log N)
+    const sorted = [...employeeAppointments].sort((a, b) => {
         const startDiff = new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
         if (startDiff === 0) {
-            return b.serviceDuration - a.serviceDuration; // Os mais longos ficam atrás
+            const durA = a.serviceDuration || 0;
+            const durB = b.serviceDuration || 0;
+            return durB - durA; // Os mais longos ficam atrás
         }
         return startDiff;
     });
@@ -27,28 +55,26 @@ export function processDayAppointments(appointments: AppointmentDetail[]): Rende
     const clusters: RenderableAppointment[][] = [];
     let currentCluster: RenderableAppointment[] = [];
     let clusterEndTime = 0;
-    const EVENT_GAP = 4;
+    const CARD_GAP = 2;
 
-    // Agrupamento de Colisões (Clusters)
+    // Agrupamento de Colisões (Clusters) e Cálculo Y ancorado no startHour
     sorted.forEach(appt => {
         const startDate = new Date(appt.startTime);
         const startMs = startDate.getTime();
         const endMs = new Date(appt.endTime).getTime();
-        const CARD_GAP = 2;
+        
+        const duration = appt.serviceDuration || ((endMs - startMs) / 60000);
 
-        const top =
-        (startDate.getHours() * 60 + startDate.getMinutes()) *
-        MINUTE_HEIGHT +
-        CARD_GAP;
+        // Subtrai o startHour para alinhar o top=0 com o início do grid
+        const top = ((startDate.getHours() - startHour) * 60 + startDate.getMinutes()) * MINUTE_HEIGHT + CARD_GAP;
 
-        const height = Math.max(
-            appt.serviceDuration * MINUTE_HEIGHT - 3,
-            10
-        );
+        const height = Math.max(duration * MINUTE_HEIGHT - 3, 10);
+        
         const renderable: RenderableAppointment = {
             ...appt,
             layout: { top, height, left: '0%', width: '100%', zIndex: 1 }
         };
+
         if (currentCluster.length > 0 && startMs >= clusterEndTime) {
             clusters.push(currentCluster);
             currentCluster = [];
@@ -61,7 +87,7 @@ export function processDayAppointments(appointments: AppointmentDetail[]): Rende
         clusters.push(currentCluster);
     }
 
-    //  Distribuição Horizontal (Column Packing)
+    // Distribuição Horizontal (Column Packing original mantido)
     const finalLayout: RenderableAppointment[] = [];
 
     clusters.forEach(cluster => {
@@ -76,7 +102,6 @@ export function processDayAppointments(appointments: AppointmentDetail[]): Rende
                 const lastEndMs = new Date(lastInCol.endTime).getTime();
                 const currentStartMs = new Date(appt.startTime).getTime();
 
-                // Se o atual começa no mesmo momento ou após o fim do anterior na coluna, encaixa.
                 if (currentStartMs >= lastEndMs) {
                     col.push(appt);
                     placed = true;
@@ -85,16 +110,16 @@ export function processDayAppointments(appointments: AppointmentDetail[]): Rende
             }
             
             if (!placed) {
-                columns.push([appt]); // Nova coluna na cascata
+                columns.push([appt]); 
             }
         });
 
         const colCount = columns.length;
         const widthPct = 100 / colCount;
         const GAP_PERCENT = 1;
+        
         columns.forEach((col, colIndex) => {
             col.forEach(appt => {
-                // Largura ajustada para 95% para não colar no card ao lado (efeito cascata fluido)
                 appt.layout.width = `${widthPct - GAP_PERCENT}%`;
                 appt.layout.left = `${colIndex * widthPct}%`;
                 appt.layout.zIndex = colIndex + 1; 

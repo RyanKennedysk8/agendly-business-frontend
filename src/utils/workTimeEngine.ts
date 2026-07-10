@@ -33,8 +33,11 @@ export function getGlobalWorkBounds(operatingHours: OperatingHourDTO[] = []) {
         }
     });
 
-    const startHour = minMinutes === 24 * 60 ? 8 : Math.floor(minMinutes / 60);
-    const endHour = maxMinutes === 0 ? 20 : Math.ceil(maxMinutes / 60);
+    const realStartHour = minMinutes === 24 * 60 ? 8 : Math.floor(minMinutes / 60);
+    const realEndHour = maxMinutes === 0 ? 20 : Math.ceil(maxMinutes / 60);
+
+    const startHour = Math.max(0, realStartHour - 1);
+    const endHour = Math.min(24, realEndHour + 1);
 
     return { startHour, endHour };
 }

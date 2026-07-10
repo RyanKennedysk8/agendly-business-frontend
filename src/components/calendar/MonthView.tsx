@@ -105,12 +105,8 @@ export const MonthView = ({ selectedDate, setSelectedDate, appointments = [], is
                     renderItem={renderAppointmentItem}
                     style={monthViewStyles.listSection}
                     showsVerticalScrollIndicator={false}
-
                     refreshing={isRefetching}
                     onRefresh={onRefresh}
-                   
-                    
-
                     ListEmptyComponent={
                         <View style={monthViewStyles.listEmptyContainer}>
                             <Text style={monthViewStyles.listEmptyText}>Nenhum agendamento para este dia.</Text>
