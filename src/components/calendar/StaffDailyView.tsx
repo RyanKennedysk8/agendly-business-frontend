@@ -1,29 +1,59 @@
-// src/components/calendar/StaffDailyView.tsx
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, RefreshControl } from 'react-native';
-import Animated, { 
-    useAnimatedScrollHandler, 
-    useSharedValue, 
-    useAnimatedRef, 
-    scrollTo, 
-    useAnimatedReaction 
-} from 'react-native-reanimated';
-
-import { scale as l, verticalScale as a, moderateScale as td } from 'react-native-size-matters';
 import { fonts } from '@/assets/fonts/fonts';
-import { StatusTheme, AppointmentStatus } from '@/types/status'; 
-
+import { Colors } from '@/colors/color';
+import { AXIS_WIDTH, COLUMN_WIDTH, HEADER_HEIGHT } from '@/components/calendar/styles/constants/calendarLayout';
+import { AppointmentStatus, StatusTheme } from '@/types/status';
+import { MINUTE_HEIGHT } from '@/utils/calendarMetrics';
+import { processEmployeeAppointments } from '@/utils/overLapEngine';
+import { getDailyWorkBounds } from '@/utils/workTimeEngine';
+import React, { useMemo } from 'react';
+import { Dimensions, Image, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+    runOnJS,
+    scrollTo,
+    useAnimatedReaction,
+    useAnimatedRef,
+    useAnimatedScrollHandler,
+    useAnimatedStyle,
+    useSharedValue
+} from 'react-native-reanimated';
+import { verticalScale as a, scale as l, moderateScale as td } from 'react-native-size-matters';
 import { TimeAxis } from './TimeAxis';
 import { TimeGrid } from './TimeGrid';
-import { getGlobalWorkBounds } from '@/utils/workTimeEngine'; 
-import { processEmployeeAppointments } from '@/utils/overLapEngine';
-import { Colors } from '@/colors/color';
-import { Ionicons } from '@expo/vector-icons';
+import { CalendarColors } from './styles/constants/calendarColors';
 
 const WINDOW_WIDTH = Dimensions.get('window').width;
-export const AXIS_WIDTH = l(30); 
-export const COLUMN_WIDTH = l(140); 
-export const HEADER_HEIGHT = a(40);
+
+const DAYS_MAP = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+
+const formatLocalTime = (timeStr?: string) => {
+    if (!timeStr) return '';
+    return timeStr.split(':').slice(0, 2).join(':');
+};
+
+const getEmployeeHoursForToday = (employee: any, date: Date, storeOperatingHours: any[]) => {
+    const todayStr = DAYS_MAP[date.getDay()];
+
+    if (employee.specificOperatingHours && employee.specificOperatingHours.length > 0) {
+        const empSchedule = employee.specificOperatingHours.find((h: any) => h.daysOfWeek?.includes(todayStr));
+        if (empSchedule && empSchedule.openingTime && empSchedule.closingTime) {
+            return `${formatLocalTime(empSchedule.openingTime)} - ${formatLocalTime(empSchedule.closingTime)}`;
+        }
+    }
+
+    if (storeOperatingHours && storeOperatingHours.length > 0) {
+        const storeSchedule = storeOperatingHours.find((h: any) => h.daysOfWeek?.includes(todayStr));
+        if (storeSchedule && storeSchedule.openingTime && storeSchedule.closingTime) {
+            return `${formatLocalTime(storeSchedule.openingTime)} - ${formatLocalTime(storeSchedule.closingTime)}`;
+        }
+    }
+
+    return 'Folga / Fechado';
+};
+
+const formatApptTime = (isoString: string) => {
+    return new Date(isoString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+};
+
 
 interface StaffDailyViewProps {
     date: Date;
@@ -32,6 +62,7 @@ interface StaffDailyViewProps {
     operatingHours: any[];
     isRefetching?: boolean;
     onRefresh?: () => void;
+    onNavigateDay?: (direction: 'PREV' | 'NEXT') => void;
 }
 
 export const StaffDailyView = ({ 
@@ -40,18 +71,30 @@ export const StaffDailyView = ({
     employees, 
     operatingHours,
     isRefetching = false,
-    onRefresh
+    onRefresh,
+    onNavigateDay
 }: StaffDailyViewProps) => {
     
-    // Refs para controle programático dos ScrollViews via UI Thread (Worklets)
     const headerRef = useAnimatedRef<Animated.ScrollView>();
     const gridRef = useAnimatedRef<Animated.ScrollView>();
 
-    // Estado compartilhado (C++) para posição do eixo X e quem está controlando o gesto
     const scrollX = useSharedValue(0);
-    const activeScroller = useSharedValue(0); // 0 = Nenhum, 1 = Cabeçalho, 2 = Grid
+    const activeScroller = useSharedValue(0); 
 
-    // Handlers para capturar o movimento e registrar a intenção do usuário
+    const dynamicColumnWidth = employees.length === 1 
+        ? WINDOW_WIDTH - AXIS_WIDTH 
+        : COLUMN_WIDTH;
+
+    // MOTOR DIMENSIONAL DO OVERSCROLL
+    const viewportWidth = WINDOW_WIDTH - AXIS_WIDTH;
+    const totalContentWidth = employees.length * dynamicColumnWidth;
+    const maxScrollX = Math.max(0, totalContentWidth - viewportWidth);
+    const PULL_THRESHOLD = l(60); 
+
+    const handleNavigation = (direction: 'PREV' | 'NEXT') => {
+        if (onNavigateDay) onNavigateDay(direction);
+    };
+
     const onHeaderScroll = useAnimatedScrollHandler({
         onScroll: (e) => {
             if (activeScroller.value === 1) {
@@ -59,6 +102,13 @@ export const StaffDailyView = ({
             }
         },
         onBeginDrag: () => { activeScroller.value = 1; },
+        onEndDrag: (e) => {
+            if (e.contentOffset.x < -PULL_THRESHOLD) {
+                runOnJS(handleNavigation)('PREV');
+            } else if (e.contentOffset.x > maxScrollX + PULL_THRESHOLD) {
+                runOnJS(handleNavigation)('NEXT');
+            }
+        }
     });
 
     const onGridScroll = useAnimatedScrollHandler({
@@ -68,9 +118,15 @@ export const StaffDailyView = ({
             }
         },
         onBeginDrag: () => { activeScroller.value = 2; },
+        onEndDrag: (e) => {
+            if (e.contentOffset.x < -PULL_THRESHOLD) {
+                runOnJS(handleNavigation)('PREV');
+            } else if (e.contentOffset.x > maxScrollX + PULL_THRESHOLD) {
+                runOnJS(handleNavigation)('NEXT');
+            }
+        }
     });
 
-    // Motor de Reação (Reaction Engine): Sincroniza o componente "escravo" com o "mestre" a 60FPS
     useAnimatedReaction(
         () => scrollX.value,
         (x) => {
@@ -82,113 +138,194 @@ export const StaffDailyView = ({
         }
     );
 
-    const dynamicColumnWidth = employees.length === 1 
-        ? WINDOW_WIDTH - AXIS_WIDTH 
-        : COLUMN_WIDTH;
+    const headerBounceStyle = useAnimatedStyle(() => {
+        let translateX = 0;
+        // Se quem está sendo arrastado fisicamente é o Grid (2)
+        if (activeScroller.value === 2) {
+            if (scrollX.value < 0) {
+                translateX = -scrollX.value; // Espelha a puxada para a esquerda
+            } else if (scrollX.value > maxScrollX) {
+                translateX = -(scrollX.value - maxScrollX); // Espelha a puxada para a direita
+            }
+        }
+        return { transform: [{ translateX }] };
+    });
 
-    // Obtém a hora inicial de operação (agora com a margem de segurança do motor)
-    const { startHour } = useMemo(() => getGlobalWorkBounds(operatingHours), [operatingHours]);
+    const gridBounceStyle = useAnimatedStyle(() => {
+        let translateX = 0;
+        // Se quem está sendo arrastado fisicamente é o Cabeçalho (1)
+        if (activeScroller.value === 1) {
+            if (scrollX.value < 0) {
+                translateX = -scrollX.value; 
+            } else if (scrollX.value > maxScrollX) {
+                translateX = -(scrollX.value - maxScrollX); 
+            }
+        }
+        return { transform: [{ translateX }] };
+    });
+
+    const { startHour, endHour } = useMemo(() => getDailyWorkBounds(operatingHours, date), [operatingHours, date]);
+
+    const GRID_HEIGHT = useMemo(() => {
+        const totalMinutes = (endHour - startHour) * 60;
+        return (totalMinutes) * MINUTE_HEIGHT; 
+    }, [startHour, endHour]);
 
     return (
         <View style={styles.container}>
-            
-            {/* SCROLL VERTICAL MESTRE */}
             <ScrollView 
                 style={styles.masterVerticalScroll}
                 contentContainerStyle={styles.masterVerticalContent}
                 showsVerticalScrollIndicator={false}
-                stickyHeaderIndices={[0]} // Trava o Header no topo da tela durante o scroll para baixo
+                stickyHeaderIndices={[0]} 
                 refreshControl={
                     onRefresh ? <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} colors={['#FF7A00']} /> : undefined
                 }
             >
-                {/* CABEÇALHO (Sticky) */}
                 <View style={styles.headerRow}>
-                    <View style={{width:AXIS_WIDTH, height:HEADER_HEIGHT, backgroundColor:Colors.white, zIndex:50, position:"absolute"}}></View>
+                    <View style={{width: AXIS_WIDTH, height: HEADER_HEIGHT, backgroundColor: Colors.white, zIndex: 50, position: "absolute"}} />
                     <Animated.ScrollView
                         ref={headerRef}
                         horizontal
-                        bounces={false}
+                        bounces={true} 
+                        overScrollMode="always" 
                         showsHorizontalScrollIndicator={false}
                         onScroll={onHeaderScroll}
                         scrollEventThrottle={16}
                         style={styles.headerScrollContainer}
                     >
-                        <View style={styles.cornerBlock} />
-                        {employees.map(emp => (
-                            <View key={`header-${emp.id}`} style={[styles.employeeHeader, { width: dynamicColumnWidth }]}>
-                                <View style={{backgroundColor:Colors.gray, width:td(30), height:td(30), borderRadius:td(15), marginRight:l(5), justifyContent:"center", alignItems:"center"}}>
-                                    <Ionicons name='person' color={Colors.corContainer} size={td(20)}/>
+                        <Animated.View style={[{ flexDirection: 'row' }, headerBounceStyle]}>
+                            <View style={styles.cornerBlock} />
+                            {employees.map((emp, index) => (
+                                  <View
+                                  key={emp.id}
+                                  style={[
+                                      styles.employeeHeader,
+                                      {
+                                          width: dynamicColumnWidth,
+                                          borderRightWidth:
+                                              index === employees.length - 1
+                                                  ? 0
+                                                  : 1,
+                                          borderRightColor: CalendarColors.dayDivider,
+                                          
+                                      },
+                                  ]}
+                              >
+                                    <View style={styles.containerAvatar}>
+                                        {emp.photoUrl ? (
+                                            <Image source={{ uri: emp.photoUrl }} style={[styles.avatar]} />
+                                        ):(
+                                            <Text style={styles.initials}>
+                                                {emp.name.charAt(0).toUpperCase()}{emp.name.charAt(1).toUpperCase()}
+                                            </Text>
+                                        )}
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.employeeName} numberOfLines={1}>{emp.name}</Text>
+                                        <Text style={styles.employeeOperatingHours} numberOfLines={1}>
+                                            {getEmployeeHoursForToday(emp, date, operatingHours)}
+                                        </Text>
+                                    </View>
                                 </View>
-                                <View>
-                                    <Text style={styles.employeeName} numberOfLines={1}>{emp.name}</Text>
-                                    <Text style={styles.employeeRole} numberOfLines={1}>{emp.name}</Text>
-                                </View>
-                            </View>
-                        ))}
+                            ))}
+                        </Animated.View>
                     </Animated.ScrollView>
                 </View>
 
-                {/* CORPO / GRID DE AGENDAMENTOS */}
-                <View style={styles.bodyRow}>
+                <View style={[styles.bodyRow, { height: GRID_HEIGHT }]}>
                     <View style={styles.timeAxisContainer}>
-                        <TimeAxis operatingHours={operatingHours} />
+                        <TimeAxis date={date} operatingHours={operatingHours} />
                     </View>
 
-                    {/* Grade Horizontal Rolável */}
                     <Animated.ScrollView 
                         ref={gridRef}
                         horizontal 
-                        bounces={false} 
+                        bounces={true} 
+                        overScrollMode="always" 
                         showsHorizontalScrollIndicator={false}
                         onScroll={onGridScroll}
                         scrollEventThrottle={16}
                         style={styles.matrixHorizontalScroll}
                     >
-                        {employees.map(emp => {
-                            const empAppointments = processEmployeeAppointments(appointments, emp.id, date, startHour);
-                            
-                            return (
-                                <View key={`col-${emp.id}`} style={[styles.employeeColumn, { width: dynamicColumnWidth }]}>
-                                    <TimeGrid date={date} operatingHours={operatingHours} />
-                                    
-                                    {empAppointments.map(appt => {
-                                        const currentStatus = (appt.status as AppointmentStatus) || AppointmentStatus.PENDING_CONFIRMATION;
-                                        const theme = StatusTheme[currentStatus] || StatusTheme[AppointmentStatus.PENDING_CONFIRMATION];
+                        {/* ENCAPSULAMENTO PARA APLICAR A TRANSFORMAÇÃO FÍSICA NO GRID */}
+                        <Animated.View style={[{ flexDirection: 'row' }, gridBounceStyle]}>
+                            {employees.map((emp, index) => {
+                                const empAppointments = processEmployeeAppointments(appointments, emp.id, date, startHour);
+                                
+                                return (
+                                    <View
+                                        key={emp.id}
+                                        style={[
+                                            styles.employeeColumn,
+                                            {
+                                                width: dynamicColumnWidth,
+                                                borderRightWidth:
+                                                    index === employees.length - 1
+                                                        ? 0
+                                                        : 1,
+                                                borderRightColor: CalendarColors.dayDivider,
+                                                
+                                            },
+                                        ]}
+                                    >
                                         
-                                        const clientName = appt.clientName || (appt.clientId && appt.clientName) || 'Cliente';
+                                        <TimeGrid date={date} operatingHours={operatingHours} />
+                                        
+                                        {empAppointments.map(appt => {
+                                            const currentStatus = (appt.status as AppointmentStatus) || AppointmentStatus.PENDING_CONFIRMATION;
+                                            const theme = StatusTheme[currentStatus] || StatusTheme[AppointmentStatus.PENDING_CONFIRMATION];
+                                            
+                                            const clientName = appt.clientName || (appt.clientId && appt.clientName) || 'Cliente';
+                                            const serviceName = appt.serviceName || (appt.serviceId && appt.serviceName) || 'Serviço';
+                                            const timeLabel = `${formatApptTime(appt.startTime)} - ${formatApptTime(appt.endTime)}`;
+                                            
+                                            const isUltraShort = appt.layout.height <= a(45);
 
-                                        return (
-                                            <View 
-                                                key={appt.appointmentId || appt.appointmentId || appt.startTime} 
-                                                style={[
-                                                    styles.appointmentCard, 
-                                                    { 
-                                                        top: appt.layout.top, 
-                                                        height: appt.layout.height, 
-                                                        left: appt.layout.left, 
-                                                        width: appt.layout.width,
-                                                        backgroundColor: theme.bg,
-                                                        borderColor: theme.border,
-                                                        zIndex: appt.layout.zIndex 
-                                                    }
-                                                ]}
-                                            >
-                                                <View style={[styles.statusIndicator, { backgroundColor: theme.text }]} />
-                                                <View style={styles.cardContent}>
-                                                    <Text style={[styles.clientName, { color: theme.text }]} numberOfLines={1}>
-                                                        {clientName}
-                                                    </Text>
-                                                    <Text style={[styles.serviceName, { color: theme.text }]} numberOfLines={1}>
-                                                        {appt.serviceName || (appt.serviceId && appt.serviceName)}
-                                                    </Text>
+                                            return (
+                                                <View 
+                                                    key={appt.appointmentId || appt.appointmentId || appt.startTime} 
+                                                    style={[
+                                                        styles.appointmentCard, 
+                                                        { 
+                                                            top: appt.layout.top, 
+                                                            height: appt.layout.height, 
+                                                            left: appt.layout.left, 
+                                                            width: appt.layout.width,
+                                                            backgroundColor: theme.bg,
+                                                            borderColor: theme.border,
+                                                            zIndex: appt.layout.zIndex,
+                                                        }
+                                                    ]}
+                                                >
+                                                    <View style={[styles.statusIndicator, { backgroundColor: theme.text }]} />
+                                                    
+                                                    {isUltraShort ? (
+                                                        <View style={styles.cardContentShort}>
+                                                            <Text style={[styles.timeText, { color: theme.text }]} numberOfLines={1}>
+                                                                {timeLabel} <Text style={styles.dotSeparator}>•</Text> {serviceName}
+                                                            </Text>
+                                                        </View>
+                                                    ) : (
+                                                        <View style={styles.cardContent}>
+                                                            <Text style={[styles.timeText, { color: theme.text }]} numberOfLines={1}>
+                                                                {timeLabel}
+                                                            </Text>
+                                                            <Text style={[styles.serviceName, { color: theme.text }]} numberOfLines={1}>
+                                                                {serviceName}
+                                                            </Text>
+                                                            <Text style={[styles.clientName, { color: theme.text, marginTop: a(2) }]} numberOfLines={1}>
+                                                                {clientName}
+                                                            </Text>
+                                                        </View>
+                                                    )}
                                                 </View>
-                                            </View>
-                                        );
-                                    })}
-                                </View>
-                            );
-                        })}
+                                            );
+                                        })}
+                                    </View>
+                                );
+                            })}
+                        </Animated.View>
                     </Animated.ScrollView>
                 </View>
             </ScrollView>
@@ -197,106 +334,145 @@ export const StaffDailyView = ({
 };
 
 const styles = StyleSheet.create({
-    container: { 
-        flex: 1, 
-        backgroundColor: '#FFFFFF' 
-    },
-    
-    // Configurações do Master Scroll
-    masterVerticalScroll: { 
-        flex: 1 
-    },
-    masterVerticalContent: { 
-        flexGrow: 1, 
-        paddingBottom: a(50) 
-    },
-    
-    // Cabeçalho Fixo
-    headerRow: { 
-        flexDirection: 'row', 
-        height: HEADER_HEIGHT, 
-        zIndex: 10, 
-        backgroundColor: '#FFFFFF' 
-    },
-    // Z-Index 20 garante que o scroll de texto passe estritamente "por baixo" deste bloco
-    cornerBlock: { 
-        width: AXIS_WIDTH, 
-        backgroundColor: Colors.white,
-        zIndex: 20 
-    },
-    headerScrollContainer: { 
-        flex: 1, 
-        backgroundColor: '#FFFFFF' 
-    },
-    
-    employeeHeader: { 
-        height: HEADER_HEIGHT, 
-        flexDirection:"row",
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        borderRightWidth: 1, 
-        borderRightColor: '#E2E8F0', 
-        paddingHorizontal: l(8) 
-    },
-    employeeName: { 
-        fontSize: td(12), 
-        fontFamily: fonts?.robotoMedium, 
-        color: Colors.corText
-    },
-    employeeRole: { 
-        fontSize: td(10), 
-        fontFamily: fonts?.robotoRegular, 
-        color: Colors.corTextSecondary, 
-   
+    container: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
     },
 
-    // Corpo da Agenda
-    bodyRow: { 
-        flexDirection: 'row', 
-        flex: 1 
+    masterVerticalScroll: {
+        flex: 1,
     },
-    timeAxisContainer: { 
-        width: l(30), 
-        borderRightWidth: 1, 
-        borderRightColor: '#E2E8F0', 
-        backgroundColor: '#F8FAFC',
-        zIndex: 10
+
+    masterVerticalContent: {
+        flexGrow: 1,
     },
-    matrixHorizontalScroll: { 
-        flex: 1 
+
+    headerRow: {
+        flexDirection: 'row',
+        height: HEADER_HEIGHT,
+        zIndex: 10,
     },
-    employeeColumn: { 
-        borderRightWidth: 1, 
-        borderRightColor: '#F1F5F9', 
-        position: 'relative' 
+
+    cornerBlock: {
+        width: AXIS_WIDTH,
+        backgroundColor: Colors.white,
+        zIndex: 20,
     },
-    
-    // Cards de Agendamento
-    appointmentCard: { 
-        position: 'absolute', 
-        borderRadius: td(6), 
-        borderWidth: 1, 
-        padding: td(4), 
-        flexDirection: 'row', 
-        overflow: 'hidden' 
+
+    headerScrollContainer: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
     },
-    statusIndicator: { 
-        width: td(4), 
-        height: '100%', 
-        borderRadius: td(2), 
-        marginRight: l(4) 
+
+    employeeHeader: {
+        height: HEADER_HEIGHT,
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        paddingHorizontal: l(5),
     },
-    cardContent: { 
-        flex: 1, 
-        justifyContent: 'flex-start' 
+
+    employeeName: {
+        fontSize: td(12),
+        fontFamily: fonts?.robotoMedium,
+        color: Colors.corText,
     },
-    clientName: { 
-        fontSize: td(12), 
-        fontFamily: fonts?.robotoBold || 'System' 
+
+    employeeOperatingHours: {
+        fontSize: td(10),
+        fontFamily: fonts?.robotoRegular,
+        color: Colors.corTextSecondary,
     },
-    serviceName: { 
-        fontSize: td(11), 
-        fontFamily: fonts?.robotoRegular || 'System', 
-        marginTop: a(2) 
+
+    bodyRow: {
+        flexDirection: 'row',
+        flex: 1,
+    },
+
+    timeAxisContainer: {
+        width: l(30),
+        backgroundColor: Colors.white,
+        zIndex: 100,
+    },
+
+    matrixHorizontalScroll: {
+        flex: 1,
+    },
+
+    employeeColumn: {
+        position: 'relative',
+    },
+
+    appointmentCard: {
+        position: 'absolute',
+        borderRadius: td(6),
+        borderWidth: 1,
+        padding: td(4),
+        flexDirection: 'row',
+        overflow: 'hidden'
+    },
+
+    statusIndicator: {
+        width: td(4),
+        height: '100%',
+        borderRadius: td(2),
+        marginRight: l(4),
+    },
+
+    cardContent: {
+        flex: 1,
+        justifyContent: 'flex-start',
+        paddingLeft: l(2)
+    },
+
+    cardContentShort: {
+        flex: 1,
+        justifyContent: 'center',
+        paddingLeft: l(2),
+    },
+
+    timeText: {
+        fontSize: td(10),
+        fontFamily: fonts?.robotoBold || 'System',
+    },
+
+    serviceName: {
+        fontSize: td(12),
+        fontFamily: fonts?.robotoMedium || 'System',
+        marginTop: a(2),
+    },
+
+    clientName: {
+        fontSize: td(11),
+        fontFamily: fonts?.robotoRegular || 'System',
+        opacity: 0.8,
+    },
+
+    dotSeparator: {
+        fontSize: td(10),
+        opacity: 0.5,
+    },
+
+    initials: {
+        fontSize: td(14),
+        fontFamily: fonts?.robotoMedium || 'System',
+        color: Colors.corTextSecondary,
+    },
+
+    containerAvatar: {
+        backgroundColor: Colors.gray || '#F1F5F9',
+        width: td(30),
+        height: td(30),
+        borderRadius: td(15),
+        marginRight: l(8),
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    avatar: {
+        width: td(30),
+        height: td(30),
+        borderRadius: td(15),
+        backgroundColor: Colors.corContainer || '#E2E8F0',
     },
 });

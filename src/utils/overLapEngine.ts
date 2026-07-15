@@ -55,7 +55,7 @@ export function processEmployeeAppointments(
     const clusters: RenderableAppointment[][] = [];
     let currentCluster: RenderableAppointment[] = [];
     let clusterEndTime = 0;
-    const CARD_GAP = 2;
+    const CARD_GAP = 0;
 
     // Agrupamento de Colisões (Clusters) e Cálculo Y ancorado no startHour
     sorted.forEach(appt => {
@@ -68,7 +68,7 @@ export function processEmployeeAppointments(
         // Subtrai o startHour para alinhar o top=0 com o início do grid
         const top = ((startDate.getHours() - startHour) * 60 + startDate.getMinutes()) * MINUTE_HEIGHT + CARD_GAP;
 
-        const height = Math.max(duration * MINUTE_HEIGHT - 3, 10);
+        const height = Math.max(duration * MINUTE_HEIGHT - 0, 10);
         
         const renderable: RenderableAppointment = {
             ...appt,
@@ -116,7 +116,7 @@ export function processEmployeeAppointments(
 
         const colCount = columns.length;
         const widthPct = 100 / colCount;
-        const GAP_PERCENT = 1;
+        const GAP_PERCENT = 0;
         
         columns.forEach((col, colIndex) => {
             col.forEach(appt => {

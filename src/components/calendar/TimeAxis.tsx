@@ -1,56 +1,53 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo } from 'react';
 import { View, Text } from 'react-native';
-import { calendarBaseStyles, TOP_PADDING_MINUTES } from './styles/calendarBaseStyles';
-import { getGlobalWorkBounds } from '@/utils/workTimeEngine';
-import { MINUTE_HEIGHT } from '@/utils/calendarMetrics';
-import { OperatingHourDTO } from '@/types/company';
+import { generateTimeSlots, MINUTE_HEIGHT } from '../../utils/calendarMetrics';
+import { getDailyWorkBounds } from '@/utils/workTimeEngine';
+import { calendarBaseStyles } from './styles/calendarBaseStyles';
+import { td } from '@/constants/responsive';
 
-export const TimeAxis = memo(({ operatingHours }: { operatingHours: OperatingHourDTO[] }) => {
-    const timeSlots = useMemo(() => {
-        // Agora injetamos os horários reais aqui
-        const { startHour, endHour } = getGlobalWorkBounds(operatingHours);
-        const slots = [];
-        
-        const startMinutes = startHour * 60;
-        const endMinutes = endHour * 60;
-        const INTERVAL_STEP = 15;
+interface TimeAxisProps {
+    date: Date;
+    operatingHours: any[];
+}
 
-        for (let minutes = startMinutes; minutes <= endMinutes; minutes += INTERVAL_STEP) {
-            const currentHour = Math.floor(minutes / 60);
-            const currentMinute = minutes % 60;
-            const isHourLabel = currentMinute === 0;
+export const HOUR_LABEL_HEIGHT = td(10);
 
-            const label = isHourLabel 
-                ? `${String(currentHour).padStart(2, '0')}:00` 
-                : String(currentMinute);
-
-            const offsetMinutes = minutes - startMinutes;
-            const topPosition = (offsetMinutes + TOP_PADDING_MINUTES) * MINUTE_HEIGHT;
-
-            slots.push({
-                key: `${currentHour}-${currentMinute}`,
-                label,
-                isHourLabel,
-                top: topPosition,
-            });
-        }
-        return slots;
-    }, [operatingHours]);
+export const TimeAxis = memo(({ date, operatingHours }: TimeAxisProps) => {
+    const { startHour, endHour } = getDailyWorkBounds(operatingHours, date);
+    const slots = generateTimeSlots(15, startHour, endHour);
 
     return (
         <View style={calendarBaseStyles.timeAxisContainer}>
-            {timeSlots.map((slot) => (
-                <Text
-                    key={slot.key}
-                    style={[
-                        slot.isHourLabel ? calendarBaseStyles.timeSlotHour : calendarBaseStyles.timeSlotMinute,
-                        { top: slot.top }
-                    ]}
-                >
-                    {slot.label}
-                </Text>
-            ))}
+            {slots.map((time, index) => {
+                const topPosition = (index * 15) * MINUTE_HEIGHT;
+
+                const isHourLabel = time.endsWith(':00');
+                const label = isHourLabel ? time : time.split(':')[1];
+
+                return (
+                    <View
+                        key={`axis-${index}`}
+                        style={[
+                            calendarBaseStyles.timeLabelContainer,
+                            {
+                                top: topPosition - HOUR_LABEL_HEIGHT / 2,
+                            },
+                        ]}
+                    >
+                        <Text
+                            style={
+                                isHourLabel
+                                    ? calendarBaseStyles.timeSlotHour
+                                    : calendarBaseStyles.timeSlotMinute
+                            }
+                        >
+                            {label}
+                        </Text>
+                    </View>
+                );
+            })}
         </View>
     );
 });
+
 TimeAxis.displayName = 'TimeAxis';

@@ -3,13 +3,13 @@ import { View, StyleSheet, Text } from 'react-native';
 import PagerView from 'react-native-pager-view';
 
 import { AgendaHeader } from './AgendaHeader';
-import { StaffDailyView } from './StaffDailyView'; // Nossa nova matriz de funcionários
+import { StaffDailyView } from './StaffDailyView'; 
 import { MonthPickerModal } from './MonthPickerModal'; 
 
 import { useAgendaNavigation, ViewMode } from '../../hooks/useAgendaNavigation';
 import { useAgendaAppointments } from '@/hooks/useAgendaAppointments';
 import { useMyCompany } from '@/hooks/useMyCompany';
-import { useCompanyEmployees } from '@/hooks/useCompanyEmployees'; // Novo hook
+import { useCompanyEmployees } from '@/hooks/useCompanyEmployees'; 
 
 function getVisibleDaysForDate(baseDate: Date, viewMode: ViewMode): Date[] {
     const days: Date[] = [];
@@ -45,7 +45,6 @@ export const CalendarPager = () => {
         visibleDays
     } = useAgendaNavigation();
 
-    // Consultas React Query
     const { 
         data: appointments = [], 
         isRefetching, 
@@ -55,7 +54,6 @@ export const CalendarPager = () => {
     const { data: company } = useMyCompany();
     const operatingHours = company?.operatingHours || [];
 
-    // Busca de funcionários para injetar nas colunas
     const { data: employees = [] } = useCompanyEmployees();
 
     const currentVisibleDays = visibleDays;
@@ -94,6 +92,15 @@ export const CalendarPager = () => {
         }, 50);
     };
 
+    // DELEGAÇÃO DO OVERSCROLL PARA O PAGERVIEW NATIVO
+    const handleOverscrollNavigation = (direction: 'PREV' | 'NEXT') => {
+        if (direction === 'PREV') {
+            pagerRef.current?.setPage(0);
+        } else {
+            pagerRef.current?.setPage(2);
+        }
+    };
+
     const handleSelectMonthYear = (year: number, month: number) => {
         const newDate = new Date(selectedDate);
         newDate.setFullYear(year);
@@ -109,21 +116,20 @@ export const CalendarPager = () => {
         changeViewMode('DAY', date);
     };
 
-    // Função auxiliar para renderizar a página correta (Dia vs Semana)
     const renderPageContent = (daysArray: Date[]) => {
         if (viewMode === 'DAY') {
             return (
                 <StaffDailyView 
-                    date={daysArray[0]} // Passamos a data única
+                    date={daysArray[0]} 
                     appointments={appointments} 
-                    employees={employees} // Injeção das colunas
+                    employees={employees} 
                     operatingHours={operatingHours} 
                     isRefetching={isRefetching} 
                     onRefresh={refetch} 
+                    onNavigateDay={handleOverscrollNavigation} // INJEÇÃO DA CHAMADA AQUI
                 />
             );
         } else {
-            // Placeholder para a futura WeekView refatorada com filtros
             return (
                 <View style={styles.placeholderContainer}>
                     <Text style={styles.placeholderText}>Visão Semanal em Construção</Text>
@@ -173,25 +179,9 @@ export const CalendarPager = () => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#FFFFFF',
-    },
-    pager: {
-        flex: 1
-    },
-    pageWrapper: {
-        flex: 1,
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-    },
-    placeholderContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#F8FAFC'
-    },
-    placeholderText: {
-        color: '#64748B'
-    }
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
+    pager: { flex: 1 },
+    pageWrapper: { flex: 1, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
+    placeholderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' },
+    placeholderText: { color: '#64748B' }
 });

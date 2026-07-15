@@ -15,6 +15,31 @@ function timeStringToMinutes(timeStr: string): number {
     return h * 60 + m;
 }
 
+export function getDailyWorkBounds(operatingHours: any[], date: Date) {
+    const dayStr = MAP_DAY_INDEX_TO_STRING[date.getDay()];
+    const hoursConfig = operatingHours || [];
+    
+    // Busca a regra APENAS para o dia que está na tela
+    const todayConfig = hoursConfig.find(p => p.daysOfWeek?.includes(dayStr));
+
+    let realStartHour = 8; // Default de segurança
+    let realEndHour = 20;  // Default de segurança
+
+    if (todayConfig && todayConfig.openingTime && todayConfig.closingTime) {
+        const openMin = timeStringToMinutes(todayConfig.openingTime);
+        const closeMin = timeStringToMinutes(todayConfig.closingTime);
+        
+        realStartHour = Math.floor(openMin / 60);
+        realEndHour = Math.ceil(closeMin / 60);
+    }
+
+    // A MÁGICA DO ALÍVIO VISUAL (1h antes, 1h depois)
+    const startHour = Math.max(0, realStartHour - 1);
+    const endHour = Math.min(24, realEndHour + 1);
+
+    return { startHour, endHour };
+}
+
 export function getGlobalWorkBounds(operatingHours: OperatingHourDTO[] = []) {
     let minMinutes = 24 * 60; 
     let maxMinutes = 0;

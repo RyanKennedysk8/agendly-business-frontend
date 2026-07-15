@@ -2,6 +2,7 @@ import { fonts } from '@/assets/fonts/fonts';
 import { Colors } from '@/colors/color';
 import { StyleSheet } from 'react-native';
 import { scale as l, verticalScale as a, moderateScale as td } from 'react-native-size-matters';
+import { CalendarColors } from './constants/calendarColors';
 
 export const agendaHeaderStyles = StyleSheet.create({
     container: {
@@ -15,7 +16,7 @@ export const agendaHeaderStyles = StyleSheet.create({
         justifyContent:"space-between",
         paddingHorizontal: l(10),
         paddingVertical:a(10),
-        backgroundColor:Colors.corButton
+        backgroundColor:Colors.black
     },
     monthSelector: {
         flexDirection: 'row',
@@ -47,7 +48,7 @@ export const agendaHeaderStyles = StyleSheet.create({
         borderRadius: td(6)
     },
     tabButtonActive: {
-        backgroundColor: Colors.corButton,
+        backgroundColor: Colors.black,
     },
     tabText: {
         fontSize: td(12),
@@ -82,6 +83,8 @@ export const agendaHeaderStyles = StyleSheet.create({
     },
     daysAxisContainer: {
         flexDirection: 'row',
+        paddingHorizontal:l(5),
+        paddingBottom:a(5)
     },
     timeAxisSpacer: {
         width: l(60),
@@ -100,13 +103,12 @@ export const agendaHeaderStyles = StyleSheet.create({
         paddingVertical: a(2),
         marginHorizontal: l(2),
         marginVertical: a(5),
-        backgroundColor:Colors.corContainer,
         borderRadius: td(10)
     },
     dayOfWeekText: {
-        fontSize: td(11),
+        fontSize: td(10),
         fontFamily:fonts.robotoMedium,
-        color: Colors.corTextLight,
+        color: CalendarColors.hourText,
 
     },
     dateCircle: {
@@ -117,12 +119,12 @@ export const agendaHeaderStyles = StyleSheet.create({
         justifyContent: 'center',
     },
     dateCircleActive: {
-        backgroundColor: Colors.corButton,
+        backgroundColor: Colors.corScreen,
     },
     dayOfMonthText: {
-        fontSize: td(16),
-        fontWeight: '500',
-        color: '#111827',
+        fontSize: td(14),
+        fontFamily:fonts.robotoMedium,
+        color: Colors.corText,
     },
     todayText: {
         color: Colors.corButton,
@@ -141,6 +143,7 @@ export const agendaHeaderStyles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
+        paddingTop:a(10)
     },
     todayActiveCircle: {
         borderWidth: 2,
