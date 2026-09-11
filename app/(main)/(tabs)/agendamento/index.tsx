@@ -5,7 +5,7 @@ import { CalendarPager } from '@/components/calendar/CalendarPager';
 export default function AgendamentoScreen() {
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#FFFFFF" />
+            <StatusBar barStyle="dark-content"/>
             
             <CalendarPager />
         </View>

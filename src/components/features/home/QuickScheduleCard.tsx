@@ -23,7 +23,7 @@ export const QuickScheduleCard: React.FC<QuickScheduleCardProps> = ({ onPress })
       <View style={styles.iconWrapper}>
         <Ionicons name="calendar-outline" size={td(24)} color="#FFFFFF" />
         <View style={styles.plusBadge}>
-          <Ionicons name="add" size={td(12)} color={Colors.corScreen} />
+          <Ionicons name="add" size={td(12)} color={Colors.corScreenDisable} />
         </View>
       </View>
 

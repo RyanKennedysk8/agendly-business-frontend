@@ -8,6 +8,7 @@ export type ColorPalette = {
     corButton: string;
     corButtonDisable:string,
     corButtonOff:string;
+    corButtonRGB:string;
     corText: string;
     corTextSecondary:string,
     corTextLight:string,
@@ -22,6 +23,7 @@ export type ColorPalette = {
     successDisable:string,
     errorDisable:string,
     border:string,
+    borderHairLine:string;
     blue: string; 
     yellow: string;
     yellowNotice: string;
@@ -39,26 +41,28 @@ export type ColorPalette = {
     corScreenDisable:'rgba(17, 24, 39, 0.5)',
   
     corContainer:"#efefef",
-    corBoxSearch:"#F5F5F5",
+    corBoxSearch:"#F8F8F8",
     corButtonSearch:"#E3E3E3",
 
-    corButton: '#FF7A00',
-    corButtonDisable: '#FFF7ED',
+    corButton: '#FF7A00', 
+    corButtonDisable: "rgba(255, 122, 0, 0.3)",
     corButtonOff:'#cccccc',
+    corButtonRGB:"rgba(255, 122, 0, 1)",
   
-    corText: '#262626', 
-    corTextSecondary:"rgba(38,38,38,0.7)",
-    corTextLight:'#64748B',
-    corTextStrong:'#475569',
-    corTextSearch:"#8F8F8F",
+    corText: '#262626',              
+    corTextSecondary: 'rgba(38,38,38,0.6)', 
+    corTextLight: '#737373',            
+    corTextStrong: '#1C1C1E',            
+    corTextSearch: '#8A8A8A',           
   
     transparente:"#00000000",
     semiTransparente:"rgba(0,0,0,0.6)",
+
   
-    placeholder: "#94A3B8",
+    placeholder: '#8A8A8A',
     gray:"#D3D3D3",
     border: '#F1F5F9', 
-    
+    borderHairLine:'#E5E5E5',
     success: '#28A745',
     successDisable: '#E9F5EA',
     error: '#E74C3C',

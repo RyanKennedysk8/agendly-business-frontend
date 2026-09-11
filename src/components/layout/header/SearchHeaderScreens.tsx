@@ -1,8 +1,9 @@
-// src/components/headers/ClientSearchHeader.tsx
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Platform } from 'react-native';
+// src/components/layout/header/SearchHeaderScreens.tsx
+import React, { useEffect, useState, useRef } from 'react';
+import { View, TouchableOpacity, StyleSheet, TextInput, Animated, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { a, l, td } from '@/constants/responsive';
 import { Colors } from '@/colors/color';
 import { fonts } from '@/assets/fonts/fonts';
@@ -11,138 +12,215 @@ type HeaderScreensProps = {
   title: string;
   placeHolder: string;
   onBack: () => void;
-  filtered: number;
   searchValue: string;
   onSearchChange: (text: string) => void;
+  scrollY: Animated.Value;
 };
 
 export const SearchHeaderScreens = ({
   title,
   placeHolder,
-  onBack,  
-  filtered,
+  onBack,
   searchValue,
-  onSearchChange
+  onSearchChange,
+  scrollY
 }: HeaderScreensProps) => {
   const insets = useSafeAreaInsets();
 
-  return (
-    <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>
-      
-      <View style={styles.topRow}>
-        <View style={{flexDirection:"row"}}>
-          <TouchableOpacity onPress={onBack} style={styles.btnBack}>
-            <Ionicons name="chevron-back-outline" size={td(24)} color={Colors.corText} />
-          </TouchableOpacity>
+  // 1. Controle de Estado do StatusBar
+  const [barStyle, setBarStyle] = useState<'light-content' | 'dark-content'>('light-content');
+  const currentBarStyle = useRef<'light-content' | 'dark-content'>('light-content');
 
-          <View style={styles.titleContainer}>
-            <Text numberOfLines={1} style={styles.title}>{title}</Text>
-          </View>
-        </View> 
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{filtered}</Text>
+  // Interceptador do valor animado para atualizar o StatusBar no exato momento da transição
+  useEffect(() => {
+    const threshold = a(40); // Ponto exato onde o fade das cores ocorre
+
+    const listenerId = scrollY.addListener(({ value }) => {
+      const nextStyle = value > threshold ? 'dark-content' : 'light-content';
+      
+      // O useRef evita que o setBarStyle seja chamado milhares de vezes por segundo no scroll
+      if (currentBarStyle.current !== nextStyle) {
+        currentBarStyle.current = nextStyle;
+        setBarStyle(nextStyle);
+      }
+    });
+
+    return () => {
+      scrollY.removeListener(listenerId);
+    };
+  }, [scrollY]);
+
+  // 2. Interpolações de layout e cor 
+  const searchHeight = scrollY.interpolate({
+    inputRange: [0, a(60)],
+    outputRange: [a(50), 0],
+    extrapolate: 'clamp'
+  });
+
+  const searchOpacity = scrollY.interpolate({
+    inputRange: [0, a(40)],
+    outputRange: [1, 0],
+    extrapolate: 'clamp'
+  });
+
+  const searchMargin = scrollY.interpolate({
+    inputRange: [0, a(60)],
+    outputRange: [a(10), 0],
+    extrapolate: 'clamp'
+  });
+
+  const gradientOpacity = scrollY.interpolate({
+    inputRange: [0, a(40)],
+    outputRange: [1, 0],
+    extrapolate: 'clamp'
+  });
+
+  const borderOpacity = scrollY.interpolate({
+    inputRange: [0, a(50)],
+    outputRange: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.1)'],
+    extrapolate: 'clamp'
+  });
+
+  const lightContentOpacity = scrollY.interpolate({
+    inputRange: [0, a(40)],
+    outputRange: [1, 0],
+    extrapolate: 'clamp'
+  });
+
+  const darkContentOpacity = scrollY.interpolate({
+    inputRange: [0, a(40)],
+    outputRange: [0, 1],
+    extrapolate: 'clamp'
+  });
+
+  return (
+    <Animated.View 
+      style={[
+        styles.headerWrapper, 
+        { paddingTop: insets.top, borderBottomColor: borderOpacity }
+      ]}
+    >
+      {/* Aplicação Dinâmica do StatusBar */}
+      <StatusBar 
+        barStyle={barStyle} 
+        backgroundColor="transparent" 
+        translucent 
+        animated={true} 
+      />
+
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: gradientOpacity }]}>
+        <LinearGradient
+          colors={['rgba(255, 122, 0, 1)', 'rgba(255, 154, 60, 0.8)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
+
+      <View style={styles.topRow}>
+        <TouchableOpacity onPress={onBack} style={styles.btnBack}>
+          <Animated.View style={{ position: 'absolute', opacity: lightContentOpacity }}>
+            <Ionicons name="chevron-back-outline" size={td(24)} color="#FFFFFF" />
+          </Animated.View>
+          <Animated.View style={{ opacity: darkContentOpacity }}>
+            <Ionicons name="chevron-back-outline" size={td(24)} color={Colors.corText || '#1E293B'} />
+          </Animated.View>
+        </TouchableOpacity>
+
+        <View style={styles.titleWrapper}>
+          <Animated.Text numberOfLines={1} style={[styles.title, { color: '#FFFFFF', position: 'absolute', opacity: lightContentOpacity }]}>
+            {title}
+          </Animated.Text>
+          <Animated.Text numberOfLines={1} style={[styles.title, { color: Colors.corText || '#1E293B', opacity: darkContentOpacity }]}>
+            {title}
+          </Animated.Text>
         </View>
+
+        <View style={styles.badge} />
       </View>
 
-
-      <View style={styles.searchRow}>
+      <Animated.View 
+        style={[
+          styles.searchContainer, 
+          { height: searchHeight, opacity: searchOpacity, marginBottom: searchMargin }
+        ]}
+      >
         <View style={styles.searchInputWrapper}>
-          <Ionicons
-            name="search"
-            size={td(17)}
-            color={Colors.corTextSearch}
-          />
-
+          <Ionicons name="search" size={td(17)} color={Colors.corTextSearch} />
+          
           <TextInput
             style={styles.searchInput}
             placeholder={placeHolder}
-            placeholderTextColor={Colors.corTextSearch}
+            placeholderTextColor={Colors.corTextSecondary}
             value={searchValue}
             onChangeText={onSearchChange}
             autoCorrect={false}
             clearButtonMode="while-editing"
+            
           />
 
           {searchValue.length > 0 && (
-            <TouchableOpacity
-              onPress={() => onSearchChange('')}
-              hitSlop={10}
-            >
-              <Ionicons
-                name="close-circle"
-                size={td(18)}
-                color={Colors.gray}
-              />
+            <TouchableOpacity onPress={() => onSearchChange('')} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <Ionicons name="close-circle" size={td(18)} color={Colors.gray} />
             </TouchableOpacity>
           )}
         </View>
-      </View>
-      
-    </View>
+      </Animated.View>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   headerWrapper: {
-    backgroundColor: Colors.white
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    elevation: 4, 
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: l(15),
-    height: a(44)
+    height: a(50),
   },
   btnBack: {
     justifyContent: 'center',
     alignItems: 'flex-start',
-    paddingRight:l(10)
+    width: l(40),
   },
-  titleContainer: {
+  titleWrapper: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: td(20),
-    fontFamily: fonts?.robotoBold,
-    color: Colors.corText,
-    textAlign: 'center',
+    fontSize: td(18),
+    fontFamily: fonts.robotoMedium,
   },
   badge: {
-    minWidth: td(28),
-    height: td(28),
-    paddingHorizontal: td(8),
-    borderRadius: td(14),
-    backgroundColor: Colors.corContainer, 
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: l(40),
   },
-  badgeText: {
-    fontSize: td(14),
-    fontFamily: fonts?.robotoBold || 'System',
-    color: Colors.corText,
+  searchContainer: {
+    paddingHorizontal: l(15),
+    justifyContent: 'flex-end',
   },
-  searchRow: {
-    paddingHorizontal: l(10),
-  },
-
   searchInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: a(30),
-    backgroundColor: "#F0F0F0",
-    borderRadius: td(10),
+    height: a(40),
+    backgroundColor: '#F8FAFC', 
+    borderRadius: td(12),
     paddingHorizontal: l(12),
-    marginBottom:a(10),
-    borderWidth: 1,
-    borderColor: "#E3E3E3",
   },
-
   searchInput: {
     flex: 1,
     marginLeft: l(8),
     fontSize: td(14),
     fontFamily: fonts?.robotoRegular,
-    color:Colors.corText
+    color: Colors.corText,
   },
 });

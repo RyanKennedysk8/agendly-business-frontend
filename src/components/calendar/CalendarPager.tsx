@@ -1,15 +1,17 @@
-import React, { useRef, useState, useMemo } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import PagerView from 'react-native-pager-view';
+import React, { useRef, useState, useMemo, useEffect } from 'react';
+import { View, StyleSheet, Text, ActivityIndicator, ScrollView, Dimensions } from 'react-native';
 
 import { AgendaHeader } from './AgendaHeader';
 import { StaffDailyView } from './StaffDailyView'; 
 import { MonthPickerModal } from './MonthPickerModal'; 
+import { DailyLoadingPlaceholder } from './DailyLoadingPlaceholder'; 
 
 import { useAgendaNavigation, ViewMode } from '../../hooks/useAgendaNavigation';
 import { useAgendaAppointments } from '@/hooks/useAgendaAppointments';
 import { useMyCompany } from '@/hooks/useMyCompany';
 import { useCompanyEmployees } from '@/hooks/useCompanyEmployees'; 
+
+const WINDOW_WIDTH = Dimensions.get('window').width;
 
 function getVisibleDaysForDate(baseDate: Date, viewMode: ViewMode): Date[] {
     const days: Date[] = [];
@@ -33,9 +35,13 @@ function getVisibleDaysForDate(baseDate: Date, viewMode: ViewMode): Date[] {
 }
 
 export const CalendarPager = () => {
-    const pagerRef = useRef<PagerView>(null);
-    
+    // Substituímos o PagerView pelo ScrollView nativo
+    const scrollRef = useRef<ScrollView>(null);
     const [isMonthPickerVisible, setIsMonthPickerVisible] = useState(false);
+    
+    const [transitionType, setTransitionType] = useState<'DAY' | 'MAJOR'>('DAY');
+    const [isForcedLoading, setIsForcedLoading] = useState(false);
+    const forcedLoadingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     
     const { 
         selectedDate, 
@@ -47,14 +53,33 @@ export const CalendarPager = () => {
 
     const { 
         data: appointments = [], 
-        isRefetching, 
+        isRefetching,
+        isFetching, 
         refetch 
     } = useAgendaAppointments(selectedDate);
 
     const { data: company } = useMyCompany();
     const operatingHours = company?.operatingHours || [];
-
     const { data: employees = [] } = useCompanyEmployees();
+
+    const triggerForcedLoading = (durationMs: number) => {
+        setIsForcedLoading(true);
+        if (forcedLoadingTimeout.current) {
+            clearTimeout(forcedLoadingTimeout.current);
+        }
+        forcedLoadingTimeout.current = setTimeout(() => {
+            setIsForcedLoading(false);
+        }, durationMs);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (forcedLoadingTimeout.current) clearTimeout(forcedLoadingTimeout.current);
+        };
+    }, []);
+
+    const isApiLoading = isFetching && !isRefetching;
+    const isLoadingData = isApiLoading || isForcedLoading;
 
     const currentVisibleDays = visibleDays;
 
@@ -72,36 +97,75 @@ export const CalendarPager = () => {
         return getVisibleDaysForDate(nextDate, viewMode);
     }, [selectedDate, viewMode]);
 
-    const handlePageSelected = (e: any) => {
-        const position = e.nativeEvent.position;
-        if (position === 1) return;
+    // Ancoragem Silenciosa: Toda vez que a data muda por qualquer motivo, travamos o scroll no meio
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            scrollRef.current?.scrollTo({ x: WINDOW_WIDTH, y: 0, animated: false });
+        }, 0);
+        return () => clearTimeout(timeout);
+    }, [selectedDate]);
 
-        const newDate = new Date(selectedDate);
-        if (position === 2) {
-            if (viewMode === 'DAY') newDate.setDate(newDate.getDate() + 1);
-            else if (viewMode === 'WEEK') newDate.setDate(newDate.getDate() + 7);
-        } else if (position === 0) {
+    // ========================================================================
+    // MOTOR DE CARROSSEL INFINITO (Swipe Manual do Usuário)
+    // ========================================================================
+    const handleMomentumScrollEnd = (e: any) => {
+        const x = e.nativeEvent.contentOffset.x;
+        
+        // Se arrastou para a página 0 (Passado)
+        if (x < WINDOW_WIDTH / 2) {
+            setTransitionType('DAY'); 
+            triggerForcedLoading(400); // Reduzimos o tempo pois a animação física já cobriu a transição
+
+            const newDate = new Date(selectedDate);
             if (viewMode === 'DAY') newDate.setDate(newDate.getDate() - 1);
             else if (viewMode === 'WEEK') newDate.setDate(newDate.getDate() - 7);
+            
+            setSelectedDate(newDate);
+        } 
+        // Se arrastou para a página 2 (Futuro)
+        else if (x > WINDOW_WIDTH * 1.5) {
+            setTransitionType('DAY');  
+            triggerForcedLoading(400);
+
+            const newDate = new Date(selectedDate);
+            if (viewMode === 'DAY') newDate.setDate(newDate.getDate() + 1);
+            else if (viewMode === 'WEEK') newDate.setDate(newDate.getDate() + 7);
+            
+            setSelectedDate(newDate);
         }
-
-        setSelectedDate(newDate);
-
-        setTimeout(() => {
-            pagerRef.current?.setPageWithoutAnimation(1);
-        }, 50);
     };
 
-    // DELEGAÇÃO DO OVERSCROLL PARA O PAGERVIEW NATIVO
+    // ========================================================================
+    // MOTOR DE OVERSCROLL DO STAFF DAILY VIEW (Ação Programática)
+    // ========================================================================
     const handleOverscrollNavigation = (direction: 'PREV' | 'NEXT') => {
+        // Ao invés de setar a data direto, nós forçamos o ScrollView a rolar visualmente!
+        // Quando a rolagem terminar, o `handleMomentumScrollEnd` acima será chamado automaticamente.
         if (direction === 'PREV') {
-            pagerRef.current?.setPage(0);
+            scrollRef.current?.scrollTo({ x: 0, y: 0, animated: true });
         } else {
-            pagerRef.current?.setPage(2);
+            scrollRef.current?.scrollTo({ x: WINDOW_WIDTH * 2, y: 0, animated: true });
         }
+    };
+
+    const handleHeaderDateNavigation = (direction: 'PREV' | 'NEXT', temporalMode: 'WEEK' | 'MONTH') => {
+        setTransitionType('MAJOR'); 
+        triggerForcedLoading(800);
+
+        const newDate = new Date(selectedDate);
+        if (temporalMode === 'WEEK') {
+            newDate.setDate(newDate.getDate() + (direction === 'NEXT' ? 7 : -7));
+            newDate.setDate(newDate.getDate() - newDate.getDay());
+        } else {
+            newDate.setDate(1);
+            newDate.setMonth(newDate.getMonth() + (direction === 'NEXT' ? 1 : -1));
+        }
+        
+        setSelectedDate(newDate);
     };
 
     const handleSelectMonthYear = (year: number, month: number) => {
+        setTransitionType('MAJOR'); 
         const newDate = new Date(selectedDate);
         newDate.setFullYear(year);
         newDate.setMonth(month);
@@ -109,15 +173,21 @@ export const CalendarPager = () => {
         setSelectedDate(newDate);
     };
 
-    const handleOpenMonthPicker = () => setIsMonthPickerVisible(true);
-    const handleCloseMonthPicker = () => setIsMonthPickerVisible(false);
-
     const handleHeaderDayPress = (date: Date) => {
+        setTransitionType('DAY');
         changeViewMode('DAY', date);
     };
 
-    const renderPageContent = (daysArray: Date[]) => {
+    const handleOpenMonthPicker = () => setIsMonthPickerVisible(true);
+    const handleCloseMonthPicker = () => setIsMonthPickerVisible(false);
+
+    const renderPageContent = (daysArray: Date[], isAdjacentPage: boolean = false) => {
         if (viewMode === 'DAY') {
+            // As páginas laterais SEMPRE carregam o Placeholder (Custo Zero de RAM)
+            if (isAdjacentPage || (transitionType === 'DAY' && isLoadingData)) {
+                return <DailyLoadingPlaceholder date={daysArray[0]} />;
+            }
+
             return (
                 <StaffDailyView 
                     date={daysArray[0]} 
@@ -126,7 +196,7 @@ export const CalendarPager = () => {
                     operatingHours={operatingHours} 
                     isRefetching={isRefetching} 
                     onRefresh={refetch} 
-                    onNavigateDay={handleOverscrollNavigation} // INJEÇÃO DA CHAMADA AQUI
+                    onNavigateDay={handleOverscrollNavigation}
                 />
             );
         } else {
@@ -142,31 +212,35 @@ export const CalendarPager = () => {
         <View style={styles.container}>
             <AgendaHeader 
                 selectedDate={selectedDate}
-                viewMode={viewMode}
-                onChangeViewMode={changeViewMode}
                 visibleDays={visibleDays}
                 onOpenMonthPicker={handleOpenMonthPicker} 
                 onDayPress={handleHeaderDayPress}
+                onNavigateDate={handleHeaderDateNavigation}
             />
 
-            <PagerView
-                key={viewMode}
-                ref={pagerRef}
-                style={styles.pager}
-                initialPage={1}
-                onPageSelected={handlePageSelected}
+            {/* O PagerView antigo foi substituído por este ScrollView Carrossel de Alta Performance */}
+            <ScrollView
+                ref={scrollRef}
+                horizontal
+                pagingEnabled
+                bounces={false}
                 overScrollMode="never"
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={handleMomentumScrollEnd}
+                contentOffset={{ x: WINDOW_WIDTH, y: 0 }} // Inicia sempre focado no centro (Página 1)
+                scrollEventThrottle={16}
+                style={styles.pager}
             >
-                <View key="page-prev" style={styles.pageWrapper}>
-                    {renderPageContent(prevVisibleDays)}
+                <View style={{ width: WINDOW_WIDTH }}>
+                    {renderPageContent(prevVisibleDays, true)}
                 </View>
-                <View key="page-current" style={styles.pageWrapper}>
-                    {renderPageContent(currentVisibleDays)}
+                <View style={{ width: WINDOW_WIDTH }}>
+                    {renderPageContent(currentVisibleDays, false)}
                 </View>
-                <View key="page-next" style={styles.pageWrapper}>
-                    {renderPageContent(nextVisibleDays)}
+                <View style={{ width: WINDOW_WIDTH }}>
+                    {renderPageContent(nextVisibleDays, true)}
                 </View>
-            </PagerView>
+            </ScrollView>
 
             <MonthPickerModal 
                 isVisible={isMonthPickerVisible}
@@ -174,6 +248,12 @@ export const CalendarPager = () => {
                 selectedDate={selectedDate}
                 onSelectMonth={handleSelectMonthYear}
             />
+
+            {transitionType === 'MAJOR' && isLoadingData && (
+                <View style={styles.globalOverlay}>
+                    <ActivityIndicator size="large" color="#FFFFFF" />
+                </View>
+            )}
         </View>
     );
 };
@@ -181,7 +261,13 @@ export const CalendarPager = () => {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFFFFF' },
     pager: { flex: 1 },
-    pageWrapper: { flex: 1, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
     placeholderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' },
-    placeholderText: { color: '#64748B' }
+    placeholderText: { color: '#64748B' },
+    globalOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        zIndex: 1000, 
+        justifyContent: 'center',
+        alignItems: 'center',
+    }
 });

@@ -8,8 +8,15 @@ export interface ServiceResponseDTO {
   isHomeService: boolean;
   isPetService: boolean;
   categoryName: string;
-  categoryId: string;
-  employeeIds?:string[];
+  categoryId: string | null;
+  employeeIds?: string[];
+  displayOrder: number;
+}
+
+export interface ServiceCategoryResponseDTO {
+  id: string;
+  name: string;
+  displayOrder: number; 
 }
 
 

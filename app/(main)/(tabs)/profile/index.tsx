@@ -27,6 +27,10 @@ export default function PerfilScreen() {
   if (isError || !company) {
     return (
       <View style={styles.loadingContainer}>
+        <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
+          <Ionicons name="log-out-outline" size={td(20)} color="#EF4444" />
+          <Text style={styles.logoutText}>Sair do Aplicativo</Text>
+        </TouchableOpacity>
         <Text style={styles.errorText}>Erro ao carregar os dados da loja.</Text>
       </View>
     );

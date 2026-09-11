@@ -1,3 +1,4 @@
+import { Colors } from '@/colors/color';
 import { a, l, td } from '@/constants/responsive';
 import { StyleSheet } from 'react-native';
 
@@ -38,7 +39,7 @@ export const monthPickerStyles = StyleSheet.create({
     navButtonText: {
         fontSize: td(18),
         fontWeight: 'bold',
-        color: '#FF7A00', // Sua cor primária nos controles
+        color: Colors.corScreen, // Sua cor primária nos controles
     },
     monthsGrid: {
         flexDirection: 'row',
@@ -52,10 +53,10 @@ export const monthPickerStyles = StyleSheet.create({
         alignItems: 'center',
         marginVertical: a(6),
         borderRadius: td(8),
-        backgroundColor: '#F9FAFB',
+        backgroundColor:Colors.corContainer,
     },
     monthCellActive: {
-        backgroundColor: '#FF7A00', // Destaque do mês selecionado
+        backgroundColor: Colors.corScreen, // Destaque do mês selecionado
     },
     monthText: {
         fontSize: td(13),

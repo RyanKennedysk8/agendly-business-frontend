@@ -62,8 +62,6 @@ export default function HomeScreen() {
           />
         </Animated.View>
         
-       
-
         <Animated.View entering={FadeInDown.delay(300).duration(400).springify()}>
           <DailyQueue 
             queue={mockAppointments}  

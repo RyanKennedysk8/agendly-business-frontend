@@ -24,7 +24,7 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({ revenue,
       <View style={styles.sectionHeaderRow}>
         <Text style={styles.sectionTitle}>{"Controle Financeiro - Janeiro"}</Text>
         <Pressable onPress={onViewDetails}>
-          <Text style={styles.linkText}>Ver Detalhes</Text>
+          <Ionicons name='chevron-forward' size={td(18)} color={Colors.corScreenDisable}/>
         </Pressable>
       </View>
 

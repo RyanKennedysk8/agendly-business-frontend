@@ -7,13 +7,13 @@
     "orientation": "portrait",
     "icon": "./src/assets/images/logo3d.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.majorkennedy.AgendlyBusiness"
     },
+
     "android": {
-      "bundleIdentifier": "com.majorkennedy.AgendlyBusiness",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./src/assets/images/logo3d.png",
@@ -22,10 +22,12 @@
       },
       "package": "com.majorkennedy.AgendlyBusiness"
     },
+
     "web": {
       "output": "static",
       "favicon": "./src/assets/images/logo3d.png"
     },
+
     "plugins": [
       "expo-router",
       [
@@ -42,18 +44,23 @@
       ],
       "expo-font",
       "expo-web-browser",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-image",
+      "expo-status-bar"
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
+
     "extra": {
       "router": {},
       "eas": {
         "projectId": "088bb634-f409-4a7b-9cc9-ede3883a731c"
       }
     },
+
     "owner": "majorkennedy"
   }
 }

@@ -106,7 +106,7 @@ export function CustomHeader({ options }: NativeStackHeaderProps) {
 
     case 'custom':
       return (
-        <View style={[styles.safeAreaWhite, { paddingTop: statusBarHeights }]}>
+        <View style={[styles.safeAreaWhite]}>
           <EditeProfileHeader 
             onBack={router.back} 
             title={title} 

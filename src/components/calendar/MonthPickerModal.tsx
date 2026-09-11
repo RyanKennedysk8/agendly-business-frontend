@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { monthPickerStyles } from './styles/monthPickerStyles';
+import { Ionicons } from '@expo/vector-icons';
+import { td } from '@/constants/responsive';
+import { Colors } from '@/colors/color';
 
 interface MonthPickerModalProps {
     isVisible: boolean;
@@ -47,13 +50,13 @@ export const MonthPickerModal = ({ isVisible, onClose, selectedDate, onSelectMon
                         {/* Seletor de Ano */}
                         <View style={monthPickerStyles.yearHeader}>
                             <TouchableOpacity onPress={decrementYear} style={monthPickerStyles.navButton}>
-                                <Text style={monthPickerStyles.navButtonText}>◀</Text>
+                                <Ionicons name='caret-back' size={td(24)} color={Colors.corScreen}/>
                             </TouchableOpacity>
                             
                             <Text style={monthPickerStyles.yearText}>{currentYear}</Text>
                             
                             <TouchableOpacity onPress={incrementYear} style={monthPickerStyles.navButton}>
-                                <Text style={monthPickerStyles.navButtonText}>▶</Text>
+                                <Ionicons name='caret-forward' size={td(24)} color={Colors.corScreen}/>
                             </TouchableOpacity>
                         </View>
 

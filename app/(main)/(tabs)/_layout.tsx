@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsiveLayout } from '../../../src/hooks/useResponsiveLayout';
 import { td } from '@/constants/responsive';
 import { Colors } from '@/colors/color';
-import { Sidebar } from '@/components/layout/sidebar/Sidebar';
+import { Sidebar } from '@/components/layout/sidebar/Sidebar'; 
 
 const TAB_SCREENS = [
   { name: 'home', title: 'Início', icon: 'home' },

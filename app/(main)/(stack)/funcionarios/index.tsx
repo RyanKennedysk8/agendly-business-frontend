@@ -1,6 +1,6 @@
 // app/(main)/(stack)/funcionarios/index.tsx
-import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, KeyboardAvoidingView, Platform, Image, Animated } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
@@ -19,9 +19,15 @@ export interface EmployeeDTO {
   specificOperatingHours: any[];
 }
 
+// Criação do componente animado (High-Order Component)
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList<EmployeeDTO>);
+
 export default function FuncionariosScreen() {
   const router = useRouter();
   const [searchText, setSearchText] = useState('');
+
+  // Referência do scroll para controlar a animação do Header independentemente do ciclo de renderização
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   const filteredEmployees = useMemo(() => {
     const allEmployees = COMPANY_MOCK.employees;
@@ -89,17 +95,18 @@ export default function FuncionariosScreen() {
     >
       <Stack.Screen options={{ headerShown: false }} />
       
+      {/* Passagem do scrollY para orquestrar a animação no Header */}
       <SearchHeaderScreens
         title="Minha Equipe"
         onBack={() => router.back()}
-        filtered={filteredEmployees.length}
         searchValue={searchText}
         onSearchChange={setSearchText}
         placeHolder='Buscar por nome ou telefone...'
+        scrollY={scrollY} 
       />
 
       <View style={styles.listContainer}>
-        <FlashList
+        <AnimatedFlashList
           data={filteredEmployees}
           renderItem={renderItem}
           keyExtractor={(item) => item.name}
@@ -109,6 +116,16 @@ export default function FuncionariosScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode='on-drag'
           ItemSeparatorComponent={() => <View style={styles.separator} />}
+          alwaysBounceVertical={false}
+          overScrollMode="never"
+          
+          // Mapeamento do evento onScroll para a variável Animated.Value
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false } // false pois animamos altura/margem no header
+          )}
+          scrollEventThrottle={16} // Define a frequência de eventos para ~60fps
+
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="people-circle-outline" size={td(48)} color="#E2E8F0" />
@@ -121,7 +138,8 @@ export default function FuncionariosScreen() {
         />
       </View>
 
-      <FabCustom onPress={handleNewEmployee} label='Novo Cliente'/>
+      {/* Rótulo corrigido para "Novo Funcionário" */}
+      <FabCustom onPress={handleNewEmployee} label='Novo Funcionário'/>
     </KeyboardAvoidingView>
   );
 }
@@ -135,7 +153,8 @@ const styles = StyleSheet.create({
       flex: 1
     },
     listContent: {
-      paddingBottom: a(100),
+      paddingBottom: a(100), // Espaço ajustado para evitar sobreposição pelo FAB
+      paddingTop: a(10),
     },
     card: {
       flexDirection: 'row',
@@ -156,7 +175,7 @@ const styles = StyleSheet.create({
       width: td(44),
       height: td(44),
       borderRadius: td(22),
-      backgroundColor: Colors.corButtonDisable,
+      backgroundColor: Colors.corButtonDisable || '#E2E8F0',
     },
     avatarFallback: {
       width: td(44),
@@ -195,7 +214,7 @@ const styles = StyleSheet.create({
     metaText: {
       fontSize: td(13),
       fontFamily: fonts?.robotoMedium || 'System',
-      color: Colors.green,
+      color: Colors.green || '#10B981',
     },
     emptyContainer: {
       alignItems: 'center',
@@ -217,20 +236,4 @@ const styles = StyleSheet.create({
       textAlign: 'center',
       lineHeight: td(20),
     },
-    fab: {
-      position: 'absolute',
-      bottom: a(24),
-      right: l(20),
-      width: td(56),
-      height: td(56),
-      borderRadius: td(28),
-      backgroundColor: '#FF7A00',
-      justifyContent: 'center',
-      alignItems: 'center',
-      shadowColor: '#FF7A00',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 5,
-    },
-  });
+});

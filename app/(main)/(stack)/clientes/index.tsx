@@ -1,6 +1,6 @@
 // app/(main)/(tabs)/clientes/index.tsx
-import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, KeyboardAvoidingView, Platform, TouchableOpacity, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,12 +13,17 @@ import { SearchHeaderScreens } from '@/components/layout/header';
 import { EmptyList } from '@/components/shared/EmptyList';
 import { FabCustom } from '@/components/shared/FabCustom';
 
+// Invólucro de Alta Ordem (HOC) para interceptação de eventos nativos na Thread UI
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList<ClientsDTO>);
 
 export default function ClientesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   
   const [searchText, setSearchText] = useState('');
+
+  // Persistência em memória (RAM) do vetor de animação Y sem disparar trigger de renderização
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   const filteredClients = useMemo(() => {
     if (!searchText.trim()) return MOCK_CLIENTS;
@@ -46,7 +51,6 @@ export default function ClientesScreen() {
   };
 
   const renderItem = useCallback(({ item }: { item: ClientsDTO }) => {
-
     return (
       <Pressable
         style={styles.card}
@@ -71,7 +75,7 @@ export default function ClientesScreen() {
             />
           </TouchableOpacity >
 
-          <TouchableOpacity  style={styles.boxHandleCLick}>
+          <TouchableOpacity style={styles.boxHandleCLick}>
             <Ionicons
               name="create-outline"
               size={td(16)}
@@ -79,7 +83,7 @@ export default function ClientesScreen() {
             />
           </TouchableOpacity >
 
-          <TouchableOpacity  style={styles.boxHandleCLick}>
+          <TouchableOpacity style={styles.boxHandleCLick}>
             <Ionicons
               name="ellipsis-vertical"
               size={td(16)}
@@ -99,19 +103,19 @@ export default function ClientesScreen() {
       <Stack.Screen 
         options={{
           headerShown: false
-      }as any}/>
+      } as any}/>
 
       <SearchHeaderScreens
         title="Meus Clientes"
         placeHolder='Pesquisar cliente...'
         onBack={() => router.back()}
-        filtered={filteredClients.length}
         searchValue={searchText}
         onSearchChange={setSearchText}
+        scrollY={scrollY}
       />
     
       <View style={styles.listContainer}>
-        <FlashList
+        <AnimatedFlashList
           data={filteredClients}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
@@ -120,18 +124,26 @@ export default function ClientesScreen() {
           keyboardShouldPersistTaps="handled" 
           keyboardDismissMode='on-drag'
           ItemSeparatorComponent={() => <View style={styles.separator} />}
+     
+          // Binding do Offset Y via frame pipeline mantendo 60FPS
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false } // Interpolando margin e height, requer Thread JS (não suporta direct UI Thread)
+          )}
+          scrollEventThrottle={16} // Resolução de captura em milissegundos (~60FPS)
+          
           ListEmptyComponent={
-            <EmptyList message="Nenhum cliente encontrado" subMessage= {searchText ? 'Tente buscar com outros termos.' : 'Cadastre seu primeiro cliente para começar.'}/>
+            <EmptyList 
+              message="Nenhum cliente encontrado" 
+              subMessage={searchText ? 'Tente buscar com outros termos.' : 'Cadastre seu primeiro cliente para começar.'}
+            />
           }
         />
       </View>
 
       <FabCustom onPress={handleNewCustomer} label='Novo cliente'/>
-
     </KeyboardAvoidingView>
-    
   );
-  
 }
 
 const styles = StyleSheet.create({
@@ -143,17 +155,15 @@ const styles = StyleSheet.create({
     flex: 1
   },
   listContent: {
-    paddingBottom: a(40),
+    paddingBottom: a(100), paddingTop: a(10)
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor:Colors.corBoxSearch,
-    borderRadius:td(12),
-    marginHorizontal: l(10),
-    marginBottom: a(5),
-    paddingHorizontal:l(10),
-    paddingVertical:a(10)
+    marginHorizontal: l(20),
+    paddingVertical: a(10),
+    borderBottomColor: Colors.border,
+    borderBottomWidth: 1
   },
   separator: {
     height: 0,
@@ -165,67 +175,40 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.corButtonDisable,
     justifyContent: 'center',
     alignItems: 'center',
-
     marginRight: l(14),
   },
-
   avatarText: {
     fontSize: td(14),
     fontFamily: fonts?.robotoMedium,
     color: Colors.corButton,
   },
-
   infoContainer: {
     flex: 1,
     justifyContent: 'space-between',
     paddingRight: l(12),
   },
-
   customerName: {
     fontSize: td(16),
     fontFamily: fonts?.robotoMedium,
     color: Colors.corText,
     marginBottom: a(5),
   },
-
   customerPhone: {
     fontSize: td(12),
     fontFamily: fonts?.robotoRegular,
     color: Colors.corTextSecondary,
   },
-
   boxHandleCLick: {
-    justifyContent:"center",
-    alignItems:"center",
-    backgroundColor:Colors.corButtonSearch,
-    paddingVertical:a(15),
-    paddingHorizontal:l(10),
-    borderRadius:td(8),
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Colors.corButtonSearch,
+    paddingVertical: a(15),
+    paddingHorizontal: l(10),
+    borderRadius: td(8),
   },
-
   metaValue: {
     fontSize: td(12.5),
     fontFamily: fonts?.robotoMedium,
     color: Colors.corTextStrong,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: a(24),
-    right: l(20),
-    width: td(54),
-    height: td(54),
-    borderRadius: td(27),
-
-    backgroundColor: Colors.corScreen ,
-
-    justifyContent: 'center',
-    alignItems: 'center',
-
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-
-    elevation: 4,
   },
 });

@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     paddingVertical:a(10),
     borderRadius: td(28),
 
-    backgroundColor: Colors.corScreen,
+    backgroundColor: Colors.corButton,
 
     justifyContent: 'center',
     alignItems: 'center',

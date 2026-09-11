@@ -8,6 +8,7 @@ import { Colors } from '@/colors/color';
 import { AppointmentDetail } from '@/types/appointments';
 import { QueueItem } from './QueueItem';
 import { FlashList } from '@shopify/flash-list';
+import { Ionicons } from '@expo/vector-icons';
 
 interface DailyQueueProps {
   queue: AppointmentDetail[];
@@ -27,7 +28,7 @@ export const DailyQueue: React.FC<DailyQueueProps> = ({
         <Text style={styles.title}>Fila do Dia</Text>
 
         <Pressable onPress={onViewAll}>
-          <Text style={styles.link}>Ver Agenda</Text>
+          <Ionicons name='chevron-forward' size={td(18)} color={Colors.corScreenDisable}/>
         </Pressable>
       </View>
 

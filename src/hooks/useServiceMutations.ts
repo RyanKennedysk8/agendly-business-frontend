@@ -27,6 +27,16 @@ export const useServiceMutations = () => {
             queryClient.invalidateQueries({ queryKey: ['company-services'] });
         },
     });
+
+    const reorderServices = useMutation({
+        mutationFn: async (items: { id: string; position: number }[]) => {
+          await api.put('/services/my-company/reorder', { items });
+        },
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['company-services'] });
+        },
+    });
+
     const deleteService = useMutation({
         mutationFn: async (id: string) => {
             await api.delete(`/services/my-company/${id}`);
@@ -34,5 +44,5 @@ export const useServiceMutations = () => {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['company-services'] }),
     });
 
-    return { createService, updateService, deleteService};
+    return { createService, updateService, deleteService, reorderServices};
 };
