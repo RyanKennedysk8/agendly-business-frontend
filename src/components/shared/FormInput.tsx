@@ -187,9 +187,10 @@ const styles = StyleSheet.create({
 
   label: {
     fontSize: td(13),
-    fontFamily: fonts?.robotoMedium || 'System',
-    color: Colors.corTextStrong,
+    fontFamily: fonts?.robotoMedium,
+    color: Colors.corText,
     marginBottom: a(6),
+    paddingLeft:l(5)
   },
 
   labelError: {
@@ -220,10 +221,10 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-    fontFamily: fonts?.robotoRegular || 'System',
+    fontFamily: fonts?.robotoRegular,
     fontSize: td(14),
     color: Colors.corText,
-    paddingHorizontal: l(6),
+    paddingHorizontal: l(5),
   },
 
   numericInput: {

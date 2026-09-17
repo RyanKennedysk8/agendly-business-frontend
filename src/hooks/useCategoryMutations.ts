@@ -10,8 +10,28 @@ export const useCategoryMutations = () => {
       return response.data;
     },
     onSuccess: () => {
-      // Invalida a query que busca as categorias da loja, atualizando o Modal instantaneamente
       queryClient.invalidateQueries({ queryKey: ['company-categories'] });
+    },
+  });
+
+  const updateCategory = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { name: string } }) => {
+      const response = await api.put(`/service-categories/my-company/${id}`, data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company-categories'] });
+    },
+  });
+
+  const deleteCategory = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/service-categories/my-company/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company-categories'] });
+      // Invalida os serviços pois a exclusão da categoria altera o categoryId deles para null no backend
+      queryClient.invalidateQueries({ queryKey: ['company-services'] });
     },
   });
 
@@ -24,5 +44,5 @@ export const useCategoryMutations = () => {
     },
   });
 
-  return { createCategory, reorderCategories};
+  return { createCategory, updateCategory, deleteCategory, reorderCategories };
 };

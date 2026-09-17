@@ -1,7 +1,15 @@
-// components/shared/IOSWheelPicker.tsx
-import React, { useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, NativeSyntheticEvent, NativeScrollEvent, FlatList, Platform } from 'react-native';
+import React, { useRef, useCallback, useEffect } from 'react';
+import { View, StyleSheet, NativeSyntheticEvent, NativeScrollEvent, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  interpolate,
+  Extrapolation,
+  useAnimatedReaction,
+  runOnJS,
+} from 'react-native-reanimated';
 import { l, a, td } from '@/constants/responsive';
 import { fonts } from '@/assets/fonts/fonts';
 import { Colors } from '@/colors/color';
@@ -21,9 +29,80 @@ interface IOSWheelPickerProps {
 const ITEM_HEIGHT = a(44);
 const VISIBLE_ITEMS = 5;
 
+// Subcomponente isolado para garantir performance na thread de UI
+const AnimatedWheelItem = ({ 
+  item, 
+  index, 
+  scrollY 
+}: { 
+  item: WheelItem; 
+  index: number; 
+  scrollY:any
+}) => {
+  const animatedStyle = useAnimatedStyle(() => {
+    // Calcula a posição ideal deste item no scroll
+    const itemPosition = index * ITEM_HEIGHT;
+    
+    // Interpolação para opacidade: 1 no centro, 0.35 nas bordas
+    const opacity = interpolate(
+      scrollY.value,
+      [itemPosition - ITEM_HEIGHT, itemPosition, itemPosition + ITEM_HEIGHT],
+      [0.35, 1, 0.35],
+      Extrapolation.CLAMP
+    );
+
+    // Interpolação para tamanho: simula a mudança de fontSize de td(18) para td(21)
+    // O scale de 1.16 corresponde aproximadamente à proporção (21 / 18)
+    const scale = interpolate(
+      scrollY.value,
+      [itemPosition - ITEM_HEIGHT, itemPosition, itemPosition + ITEM_HEIGHT],
+      [1, 1.16, 1],
+      Extrapolation.CLAMP
+    );
+
+    return {
+      opacity,
+      transform: [{ scale }],
+    };
+  });
+
+  return (
+    <View style={styles.itemRow}>
+      <Animated.Text style={[styles.itemText, animatedStyle]}>
+        {item.label}
+      </Animated.Text>
+    </View>
+  );
+};
+
 export function IOSWheelPicker({ data, selectedValue, onValueChange, unit }: IOSWheelPickerProps) {
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<Animated.FlatList<WheelItem>>(null);
   const selectedIndex = data.findIndex((item) => item.value === selectedValue);
+  
+  // Shared value captura o scroll em 60/120fps
+  const scrollY = useSharedValue(selectedIndex >= 0 ? selectedIndex * ITEM_HEIGHT : 0);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const triggerHaptic = useCallback(() => {
+    Haptics.selectionAsync();
+  }, []);
+
+  // Dispara o haptic dinamicamente a cada "tick" de item que passa pelo centro
+  useAnimatedReaction(
+    () => Math.round(scrollY.value / ITEM_HEIGHT),
+    (currentIndex, previousIndex) => {
+      if (currentIndex !== previousIndex && previousIndex !== null) {
+        if (currentIndex >= 0 && currentIndex < data.length) {
+          runOnJS(triggerHaptic)();
+        }
+      }
+    }
+  );
 
   const handleScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -33,7 +112,6 @@ export function IOSWheelPicker({ data, selectedValue, onValueChange, unit }: IOS
 
       if (data[clampedIndex] && data[clampedIndex].value !== selectedValue) {
         onValueChange(data[clampedIndex].value);
-        Haptics.selectionAsync();
       }
     },
     [data, selectedValue, onValueChange]
@@ -41,40 +119,36 @@ export function IOSWheelPicker({ data, selectedValue, onValueChange, unit }: IOS
 
   return (
     <View style={styles.pickerContainer}>
-      <FlatList
-        ref={flatListRef}
+      <Animated.FlatList
+        ref={flatListRef as any}
         data={data}
         keyExtractor={(item) => `${unit}-${item.value}`}
         showsVerticalScrollIndicator={false}
         snapToInterval={ITEM_HEIGHT}
         decelerationRate="fast"
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         onMomentumScrollEnd={handleScrollEnd}
         initialScrollIndex={selectedIndex >= 0 ? selectedIndex : 0}
         getItemLayout={(_, index) => ({
-            length: ITEM_HEIGHT,
-            offset: ITEM_HEIGHT * index,
-            index,
+          length: ITEM_HEIGHT,
+          offset: ITEM_HEIGHT * index,
+          index,
         })}
-        
-        /* PROPS DE COMPATIBILIDADE E ESTÉTICA ANDROID */
         overScrollMode="never" 
         nestedScrollEnabled={true} 
         removeClippedSubviews={Platform.OS === 'android'} 
-        
         contentContainerStyle={{
-            paddingVertical: (ITEM_HEIGHT * (VISIBLE_ITEMS - 1)) / 2,
+          paddingVertical: (ITEM_HEIGHT * (VISIBLE_ITEMS - 1)) / 2,
         }}
-        renderItem={({ item }) => {
-            const isSelected = item.value === selectedValue;
-            return (
-            <View style={styles.itemRow}>
-                <Text style={[styles.itemText, isSelected && styles.itemTextSelected]}>
-                {item.label}
-                </Text>
-            </View>
-            );
-        }}
-        />
+        renderItem={({ item, index }) => (
+          <AnimatedWheelItem 
+            item={item} 
+            index={index} 
+            scrollY={scrollY} 
+          />
+        )}
+      />
     </View>
   );
 }
@@ -91,14 +165,7 @@ const styles = StyleSheet.create({
   },
   itemText: {
     fontSize: td(18),
-    fontFamily: fonts?.robotoRegular || 'System',
-    color: Colors.corTextLight,
-    opacity: 0.4,
-  },
-  itemTextSelected: {
-    fontSize: td(21),
-    fontFamily: fonts?.robotoBold || 'System',
+    fontFamily: fonts?.robotoBold,
     color: Colors.corText,
-    opacity: 1,
   },
 });

@@ -4,13 +4,14 @@ import { View, ActivityIndicator } from 'react-native';
 import { Stack, useRouter, useSegments, SplashScreen } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { useFonts } from '@/hooks/useFonts';
 import { CustomHeader } from '@/components/layout/header/orquestrador/CustomHeader';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'; // O contexto que você vai colar aqui
 import { Colors } from '@/colors/color';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from '@/components/shared/ToastBase';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -60,7 +61,7 @@ function InitialLayout() {
   return (
     <Stack 
       screenOptions={{ 
-        header: (props: NativeStackHeaderProps) => <CustomHeader {...props} />
+        header: (props: any) => <CustomHeader {...props} />
       } as any} 
     />
   );
@@ -87,6 +88,7 @@ export default function RootLayout() {
           {/* O AuthProvider encapsula a lógica de rotas */}
           <AuthProvider>
             <InitialLayout />
+            <Toast config={toastConfig} topOffset={60} />
           </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

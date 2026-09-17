@@ -84,15 +84,8 @@ export default function SelecaoTempoScreen() {
 
       {/* Resumo e Botão de Confirmação */}
       <View style={styles.footer}>
-        <View style={styles.summaryBox}>
-          <Text style={styles.summaryLabel}>Tempo selecionado:</Text>
-          <Text style={styles.summaryValue}>
-            {hours > 0 ? `${hours}h ` : ''}{minutes}min
-          </Text>
-        </View>
-
         <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm} activeOpacity={0.8}>
-          <Text style={styles.confirmText}>Confirmar Duração</Text>
+          <Text style={styles.confirmText}>OK</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -112,7 +105,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: l(16),
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
     borderColor: Colors.borderHairLine,
   },
   backButton: {
@@ -149,8 +142,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: l(20),
     paddingTop: a(14),
     paddingBottom: a(28),
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.borderHairLine,
     backgroundColor: '#FFFFFF',
     gap: a(12),
   },
@@ -172,7 +163,7 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     backgroundColor: Colors.corButton,
-    height: a(48),
+    height: a(40),
     borderRadius: td(10),
     justifyContent: 'center',
     alignItems: 'center',

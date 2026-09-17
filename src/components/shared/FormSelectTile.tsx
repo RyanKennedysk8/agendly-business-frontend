@@ -54,9 +54,10 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: td(13),
-    fontFamily: fonts?.robotoMedium || 'System',
-    color: Colors.corTextStrong,
+    fontFamily: fonts?.robotoMedium,
+    color: Colors.corText,
     marginBottom: a(6),
+    paddingLeft:l(5)
   },
   labelError: {
     color: '#EF4444',

@@ -1,11 +1,14 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, 
-  Platform, KeyboardAvoidingView, LayoutAnimation, UIManager 
+  Platform, KeyboardAvoidingView, LayoutAnimation, UIManager, TextInput, Modal, Alert
 } from 'react-native';
 import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
+
 import { l, a, td } from '@/constants/responsive';
 import { fonts } from '@/assets/fonts/fonts';
 import { SearchHeaderScreens } from '@/components/layout/header';
@@ -19,12 +22,10 @@ import { useCategoryMutations } from '@/hooks/useCategoryMutations';
 import { FabCustom } from '@/components/shared/FabCustom';
 import { ServiceResponseDTO, ServiceCategoryResponseDTO } from '@/types/company';
 
-// Habilita animações fluidas no Android para transição suave ao entrar/sair do modo organização
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// Prevenção de loop de renderização (Maximum update depth) fixando a referência dos arrays vazios
 const EMPTY_SERVICES: ServiceResponseDTO[] = [];
 const EMPTY_CATEGORIES: ServiceCategoryResponseDTO[] = [];
 
@@ -34,25 +35,30 @@ type ListItem =
 
 export default function ServicosScreen() {
   const router = useRouter();
-  const [searchText, setSearchText] = useState('');
+  const insets = useSafeAreaInsets();
   
-  // Controle de UX: Modo focado em organização de categorias
+  const [searchText, setSearchText] = useState('');
   const [isCategoryMode, setIsCategoryMode] = useState(false);
+  
+  // Estados do Modal de Categoria (Misto para Criar e Editar)
+  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [editingCategory, setEditingCategory] = useState<{ id: string; name: string } | null>(null);
   
   const { data: services = EMPTY_SERVICES, isLoading: isLoadingSvc } = useCompanyServices();
   const { data: categories = EMPTY_CATEGORIES, isLoading: isLoadingCat } = useCompanyCategories();
   
-  const { deleteService, reorderServices } = useServiceMutations();
-  const { reorderCategories } = useCategoryMutations();
+  const { reorderServices } = useServiceMutations(); // Se precisar do deleteService, pegue aqui
+  
+  // Pegando as mutações de categoria (certifique-se de que o deleteCategory e updateCategory existam no seu hook)
+  const { createCategory, updateCategory, deleteCategory, reorderCategories } = useCategoryMutations();
 
   const isMutating = reorderServices.isPending || reorderCategories.isPending;
 
-  // Estados locais para permitir atualizações otimistas instantâneas sem esperar a rede
   const [localServices, setLocalServices] = useState<ServiceResponseDTO[]>([]);
   const [localCategories, setLocalCategories] = useState<ServiceCategoryResponseDTO[]>([]);
   const [localData, setLocalData] = useState<ListItem[]>([]);
 
-  // Sincroniza dados do backend apenas quando não houver mutações em andamento
   useEffect(() => {
     if (!isMutating) {
       setLocalServices(services);
@@ -60,17 +66,13 @@ export default function ServicosScreen() {
     }
   }, [services, categories, isMutating]);
 
-  // 1. ACHATAMENTO (FLATTEN) DA LISTA
-  // Agrupa os serviços ou exibe apenas categorias baseado no modo atual
   useEffect(() => {
     if (isLoadingSvc || isLoadingCat) return;
 
     let flatList: ListItem[] = [];
 
-    // 1.1 Grupo: Sem Categoria (Sempre visível)
     flatList.push({ type: 'CATEGORY', id: 'NO_CATEGORY', name: 'Sem categoria', displayOrder: -1 });
     
-    // Anexa serviços se não estiver no modo de organização
     if (!isCategoryMode) {
       const noCatServices = localServices.filter(s => !s.categoryId).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
       noCatServices.forEach(s => {
@@ -78,12 +80,10 @@ export default function ServicosScreen() {
       });
     }
 
-    // 1.2 Grupo: Categorias Dinâmicas
     const sortedCategories = [...localCategories].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
     sortedCategories.forEach(cat => {
       flatList.push({ type: 'CATEGORY', id: cat.id, name: cat.name, displayOrder: cat.displayOrder || 0 });
       
-      // Anexa serviços da categoria se não estiver no modo organização
       if (!isCategoryMode) {
         const catServices = localServices.filter(s => s.categoryId === cat.id).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
         catServices.forEach(s => {
@@ -95,7 +95,6 @@ export default function ServicosScreen() {
     setLocalData(flatList);
   }, [localServices, localCategories, isLoadingSvc, isLoadingCat, isCategoryMode]);
 
-  // 2. FILTRO DE BUSCA
   const filteredData = useMemo(() => {
     if (!searchText.trim()) return localData;
     const lowerSearch = searchText.toLowerCase().trim();
@@ -104,12 +103,10 @@ export default function ServicosScreen() {
     );
   }, [searchText, localData]);
 
-  // 3. MOTOR DE REORDENAÇÃO (ON DROP)
   const handleDragEnd = ({ data }: { data: ListItem[] }) => {
-    setLocalData(data); // Atualiza UI imediatamente
+    setLocalData(data);
 
     if (isCategoryMode) {
-      // Processa a reordenação exclusiva de categorias
       const updatedCategories: { id: string; position: number }[] = [];
       let cOrder = 0;
       data.forEach(item => {
@@ -118,9 +115,11 @@ export default function ServicosScreen() {
         }
       });
 
-      if (updatedCategories.length > 0) reorderCategories.mutate(updatedCategories);
+      if (updatedCategories.length > 0) {
+        reorderCategories.mutate(updatedCategories);
+        Toast.show({ type: 'success', text1: 'Ordem atualizada', text2: 'A nova ordem das categorias foi salva.' });
+      }
 
-      // Atualiza o estado local para preservar a nova ordem ao sair do modo de organização
       const newLocalCats = localCategories.map(c => {
         const up = updatedCategories.find(uc => uc.id === c.id);
         return up ? { ...c, displayOrder: up.position } : c;
@@ -128,7 +127,6 @@ export default function ServicosScreen() {
       setLocalCategories(newLocalCats);
 
     } else {
-      // Processa a reordenação de serviços e transferências entre categorias
       const updatedServices: { id: string; position: number; categoryId: string | null }[] = [];
       let currentCategoryId: string | null = null;
       let sOrder = 0;
@@ -145,7 +143,10 @@ export default function ServicosScreen() {
         }
       });
 
-      if (updatedServices.length > 0) reorderServices.mutate(updatedServices);
+      if (updatedServices.length > 0) {
+        reorderServices.mutate(updatedServices);
+        Toast.show({ type: 'success', text1: 'Ordem atualizada', text2: 'A nova ordem dos serviços foi salva.' });
+      }
 
       const newLocalSvcs = localServices.map(s => {
         const up = updatedServices.find(us => us.id === s.id);
@@ -164,30 +165,90 @@ export default function ServicosScreen() {
     router.push({ pathname: '/(main)/(stack)/servicos/novo-servico', params: { id } } as any);
   }, [router]);
 
+  // ==========================================
+  // LÓGICA DE AÇÕES DA CATEGORIA (Editar/Excluir)
+  // ==========================================
+  const handleCategoryPress = (id: string, name: string) => {
+    Alert.alert(
+      'Opções da Categoria',
+      `O que deseja fazer com "${name}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Editar Nome', 
+          onPress: () => {
+            setEditingCategory({ id, name }); // Seta quem estamos editando
+            setNewCategoryName(name); // Preenche o input
+            setCategoryModalVisible(true); // Abre o modal
+          } 
+        },
+        { 
+          text: 'Excluir', 
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Confirmar Exclusão',
+              'Os serviços desta categoria ficarão "Sem categoria". Deseja continuar?',
+              [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                  text: 'Sim, Excluir',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await deleteCategory.mutateAsync(id);
+                      Toast.show({ type: 'success', text1: 'Categoria excluída' });
+                    } catch (error) {
+                      Toast.show({ type: 'error', text1: 'Erro ao excluir' });
+                    }
+                  }
+                }
+              ]
+            )
+          } 
+        }
+      ]
+    );
+  };
+
+  const openNewCategoryModal = () => {
+    setEditingCategory(null);
+    setNewCategoryName('');
+    setCategoryModalVisible(true);
+  };
+
   const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const formatDuration = (min: number) => min < 60 ? `${min} min` : `${Math.floor(min/60)}h ${min%60 > 0 ? min%60+'m' : ''}`;
 
-  // 4. RENDERIZAÇÃO
   const renderItem = ({ item, drag, isActive }: RenderItemParams<ListItem>) => {
     if (item.type === 'CATEGORY') {
       const isNoCategory = item.id === 'NO_CATEGORY';
       return (
         <ScaleDecorator>
           <TouchableOpacity 
-            activeOpacity={0.9}
+            activeOpacity={0.7}
             delayLongPress={150}
-            // Arrasta apenas se estiver no modo categoria e não for a "Sem categoria"
             onLongPress={isCategoryMode && !isNoCategory ? drag : undefined}
+            onPress={() => {
+              // Só abre as opções se NÃO for "Sem categoria" e NÃO estiver no modo de organizar
+              if (!isNoCategory && !isCategoryMode) {
+                handleCategoryPress(item.id, item.name);
+              }
+            }}
             disabled={isNoCategory}
             style={[styles.categoryHeader, isActive && styles.activeItem]}
           >
-            <View style={styles.dragHandle}>
-              {/* Exibe o ícone de arraste apenas quando o modo de organização estiver ativo */}
-              {isCategoryMode && !isNoCategory && <Ionicons name="reorder-three" size={td(24)} color="#FF7A00" />}
+            <View style={{flexDirection:"row", alignItems:"center"}}>
+              {isCategoryMode && !isNoCategory && <Ionicons name="reorder-three-outline" size={td(24)} color={Colors.gray} />}
+              <Text style={[styles.categoryTitle, (isNoCategory || !isCategoryMode) && { marginLeft: 0 }]}>
+                {item.name}
+              </Text>
             </View>
-            <Text style={[styles.categoryTitle, (isNoCategory || !isCategoryMode) && { marginLeft: 0 }]}>
-              {item.name}
-            </Text>
+            
+            {/* Esconde o chevron no modo de organização, pois ele vira drag and drop puro */}
+            {!isCategoryMode && !isNoCategory && (
+              <Ionicons name="chevron-forward" size={td(20)} color={Colors.gray} />
+            )}
           </TouchableOpacity>
         </ScaleDecorator>
       );
@@ -203,19 +264,20 @@ export default function ServicosScreen() {
           style={[styles.serviceCard, isActive && styles.activeItem]}
         >
           <View style={styles.dragHandle}>
-            <Ionicons name="reorder-two" size={td(22)} color="#94A3B8" />
+            <Ionicons name="reorder-three-outline" size={td(26)} color={Colors.gray} />
           </View>
-          
-          <View style={styles.verticalBar} />
-          
-          <View style={styles.serviceInfo}>
-            <Text style={styles.serviceName}>{item.name}</Text>
-            <Text style={styles.serviceDuration}>{formatDuration(item.duration)}</Text>
-          </View>
-          
-          <View style={styles.priceWrapper}>
-            <Text style={styles.servicePrice}>{formatCurrency(item.price)}</Text>
-            <Ionicons name="chevron-forward" size={td(16)} color="#CBD5E1" />
+          <View style={styles.dragHandleBottom}>
+            <View style={{flexDirection:"row"}}>
+              <View style={styles.verticalBar} />
+              <View style={styles.serviceInfo}>
+                <Text style={styles.serviceName}>{item.name}</Text>
+                <Text style={styles.serviceDuration}>{formatDuration(item.duration)}</Text>
+              </View>
+            </View>
+            <View style={styles.priceWrapper}>
+              <Text style={styles.servicePrice}>{formatCurrency(item.price)}</Text>
+              <Ionicons name="chevron-forward" size={td(16)} color={Colors.gray} />
+            </View>
           </View>
         </TouchableOpacity>
       </ScaleDecorator>
@@ -225,6 +287,8 @@ export default function ServicosScreen() {
   if (isLoadingSvc || isLoadingCat) {
     return <View style={styles.center}><ActivityIndicator size="large" color="#FF7A00" /></View>;
   }
+
+  const isModalSaving = createCategory?.isPending || updateCategory?.isPending;
 
   return (
     <View style={styles.container}>
@@ -240,12 +304,11 @@ export default function ServicosScreen() {
       />
 
       <View style={styles.createCategoryRow}>
-        <TouchableOpacity style={styles.btnNewCategory} onPress={() => {/* Modal Lógica */}}>
-          <Ionicons name="add" size={td(20)} color="#1E293B" />
+        <TouchableOpacity style={styles.btnNewCategory} onPress={openNewCategoryModal}>
+          <Ionicons name="add" size={td(20)} color={Colors.corText} />
           <Text style={styles.txtNewCategory}>Nova categoria</Text>
         </TouchableOpacity>
 
-        {/* Toggle do Modo de Organização */}
         <TouchableOpacity 
           style={styles.btnToggleMode} 
           onPress={toggleCategoryMode}
@@ -253,7 +316,7 @@ export default function ServicosScreen() {
           <Ionicons 
             name={isCategoryMode ? "checkmark-done" : "options-outline"} 
             size={td(18)} 
-            color={isCategoryMode ? "#FF7A00" : "#64748B"} 
+            color={isCategoryMode ? "#FF7A00" : Colors.corTextLight} 
           />
           <Text style={[styles.txtToggleMode, isCategoryMode && { color: '#FF7A00', fontFamily: fonts?.robotoBold }]}>
             {isCategoryMode ? "Concluir Organização" : "Organizar Categorias"}
@@ -261,33 +324,107 @@ export default function ServicosScreen() {
         </TouchableOpacity>
       </View>
 
-      <DraggableFlatList
-        data={filteredData}
-        keyExtractor={(item) => item.type + '_' + item.id}
-        renderItem={renderItem}
-        onDragEnd={handleDragEnd}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        activationDistance={searchText.length > 0 ? 9999 : 0} 
-      />
+      <View style={{ flex: 1 }}>
+        <DraggableFlatList
+          data={filteredData}
+          keyExtractor={(item) => item.type + '_' + item.id}
+          renderItem={renderItem}
+          onDragEnd={handleDragEnd}
+          contentContainerStyle={{ paddingBottom: insets.bottom + a(50) }}
+          showsVerticalScrollIndicator={false}
+          activationDistance={searchText.length > 0 ? 9999 : 0} 
+        />
+      </View>
 
-      {/* Esconde o FabCustom durante a organização para não poluir a interface */}
       {!isCategoryMode && (
-        <FabCustom onPress={() => router.push('/(main)/(stack)/servicos/novo-servico' as any)} label=''  />
+        <FabCustom onPress={() => router.push('/(main)/(stack)/servicos/novo-servico' as any)} label='Novo serviço'  />
       )}
+
+      {/* Modal Misto: Nova Categoria e Editar Categoria */}
+      <Modal visible={isCategoryModalVisible} transparent animationType="fade" onRequestClose={() => setCategoryModalVisible(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+            </Text>
+            
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Ex: Barba, Rosto..."
+              placeholderTextColor={Colors.placeholder}
+              value={newCategoryName}
+              onChangeText={setNewCategoryName}
+              autoFocus
+              editable={!isModalSaving}
+            />
+            
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={styles.modalBtnCancel} 
+                onPress={() => {
+                  setNewCategoryName('');
+                  setEditingCategory(null);
+                  setCategoryModalVisible(false);
+                }}
+                disabled={isModalSaving}
+              >
+                <Text style={styles.modalBtnCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.modalBtnSave} 
+                onPress={async () => {
+                  const categoryName = newCategoryName.trim();
+                  if (!categoryName) return;
+                  
+                  try {
+                    if (editingCategory) {
+                      // Edita
+                      await updateCategory.mutateAsync({ id: editingCategory.id, data: { name: categoryName } });
+                      Toast.show({ type: 'success', text1: 'Categoria atualizada' });
+                    } else {
+                      // Cria
+                      await createCategory.mutateAsync({ name: categoryName });
+                      Toast.show({ type: 'success', text1: 'Categoria criada' });
+                    }
+                    
+                    setNewCategoryName('');
+                    setEditingCategory(null);
+                    setCategoryModalVisible(false);
+                  } catch (error) {
+                    Toast.show({ type: 'error', text1: 'Erro ao salvar' });
+                  }
+                }} 
+                disabled={isModalSaving}
+              >
+                {isModalSaving ? (
+                  <ActivityIndicator color="#FFF" size="small" />
+                ) : (
+                  <Text style={styles.modalBtnSaveText}>Salvar</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  listContent: { paddingBottom: a(100) },
-  
+  container: { 
+    flex: 1, 
+    backgroundColor: '#FFFFFF' 
+  },
+  center: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
   createCategoryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: a(15),
+    paddingVertical: a(10),
     paddingHorizontal: l(16),
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.border,
@@ -298,74 +435,79 @@ const styles = StyleSheet.create({
     gap: l(6),
   },
   txtNewCategory: {
-    fontSize: td(15),
-    fontFamily: fonts?.robotoMedium || 'System',
-    color: '#1E293B',
+    fontSize: td(14),
+    fontFamily: fonts?.robotoMedium,
+    color: Colors.corText,
   },
-  
   btnToggleMode: { 
     flexDirection: 'row', 
     alignItems: 'center', 
     gap: l(4), 
-    backgroundColor: '#F8FAFC', 
+    backgroundColor: Colors.corContainer, 
     paddingHorizontal: l(12), 
     paddingVertical: a(8), 
     borderRadius: td(20) 
   },
   txtToggleMode: { 
     fontSize: td(12), 
-    fontFamily: fonts?.robotoMedium || 'System', 
-    color: '#64748B' 
+    fontFamily: fonts?.robotoMedium, 
+    color: Colors.corTextLight 
   },
-
   categoryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: a(18),
-    paddingHorizontal: l(16),
-    backgroundColor: '#FFFFFF',
+    justifyContent: "space-between",
+    paddingVertical: a(10),
+    paddingHorizontal: l(10),
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderColor: Colors.border
   },
   categoryTitle: {
-    fontSize: td(15),
-    fontFamily: fonts?.robotoBold || 'System',
-    color: '#0F172A',
+    fontSize: td(14),
+    fontFamily: fonts?.robotoMedium,
+    color: Colors.corText,
     marginLeft: l(8),
   },
-
   serviceCard: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: a(16),
-    paddingHorizontal: l(16),
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#F1F5F9',
+    paddingHorizontal: l(10),
+    marginRight: l(5)
   },
   dragHandle: {
     width: l(30),
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
+  dragHandleBottom: {
+    flexDirection: 'row',  
+    alignItems: 'center', 
+    justifyContent: "space-between", 
+    flex: 1,
+    borderBottomWidth: 1, 
+    borderColor: Colors.border, 
+    paddingVertical: a(10)
+  },
   verticalBar: {
-    width: l(3),
+    width: l(2),
     height: a(32),
-    backgroundColor: '#06B6D4', 
+    backgroundColor: Colors.corButton, 
     borderRadius: td(2),
     marginRight: l(12),
   },
-  serviceInfo: {
-    flex: 1,
-  },
+  serviceInfo: {},
   serviceName: {
-    fontSize: td(15),
-    fontFamily: fonts?.robotoMedium || 'System',
-    color: '#1E293B',
+    fontSize: td(14),
+    fontFamily: fonts?.robotoRegular,
+    color: Colors.corText,
     marginBottom: a(2),
   },
   serviceDuration: {
     fontSize: td(12),
     fontFamily: fonts?.robotoRegular || 'System',
-    color: '#94A3B8',
+    color: Colors.corTextLight,
   },
   priceWrapper: {
     flexDirection: 'row',
@@ -374,15 +516,69 @@ const styles = StyleSheet.create({
   },
   servicePrice: {
     fontSize: td(15),
-    fontFamily: fonts?.robotoBold || 'System',
-    color: '#0F172A',
+    fontFamily: fonts?.robotoMedium,
+    color: Colors.corTextStrong,
   },
   activeItem: {
-    backgroundColor: '#F8FAFC',
-    elevation: 8,
+    backgroundColor: Colors.white,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 }
-  }
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 }
+  },
+  modalOverlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.4)', 
+    justifyContent: 'center', 
+    padding: l(20) 
+  },
+  modalContent: { 
+    backgroundColor: '#FFF', 
+    borderRadius: td(16), 
+    padding: l(20) 
+  },
+  modalTitle: { 
+    fontSize: td(16), 
+    fontFamily: fonts?.robotoBold, 
+    color: '#1E293B', 
+    marginBottom: a(16), 
+    textAlign: 'center' 
+  },
+  modalInput: { 
+    height: a(46), 
+    borderWidth: 1, 
+    borderColor: '#E2E8F0', 
+    borderRadius: td(10), 
+    paddingHorizontal: l(12), 
+    marginBottom: a(20) 
+  },
+  modalActions: { 
+    flexDirection: 'row', 
+    gap: l(10) 
+  },
+  modalBtnCancel: { 
+    flex: 1, 
+    height: a(44), 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: '#F1F5F9', 
+    borderRadius: td(10) 
+  },
+  modalBtnCancelText: { 
+    color: '#64748B', 
+    fontFamily: fonts?.robotoMedium 
+  },
+  modalBtnSave: { 
+    flex: 1, 
+    height: a(44), 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: Colors.corButton, 
+    borderRadius: td(10) 
+  },
+  modalBtnSaveText: { 
+    color: '#FFF', 
+    fontFamily: fonts?.robotoMedium 
+  },
 });

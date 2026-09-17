@@ -6,8 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { l, a, td } from '@/constants/responsive';
 import { fonts } from '@/assets/fonts/fonts';
 import { Colors } from '@/colors/color';
-import { EditeProfileHeader, SearchHeaderScreens } from '@/components/layout/header';
-import { FabCustom } from '@/components/shared/FabCustom';
+import { SearchHeaderScreens } from '@/components/layout/header';
 import { useCompanyCategories } from '@/hooks/useCompanyCategories';
 import { useCompanyEmployees } from '@/hooks/useCompanyEmployees';
 import { useServiceFormStore } from '@/store/useServiceFormStore';
@@ -35,11 +34,11 @@ export default function SelecaoEntidadeScreen() {
   // Mapeamento Dinâmico de Entidade
   const sourceData = useMemo(() => {
     if (params.type === 'categoria') {
-      return categoriesData.map(c => ({ id: c.id, name: c.name }));
+      return categoriesData.map(c => ({ id: c.id, name: c.name}));
     } else {
       return [
         { id: 'ALL', name: 'Todos os profissionais' }, // Injeção lógica do item padrão
-        ...employeesData.map(e => ({ id: e.id, name: e.name }))
+        ...employeesData.map(e => ({ id: e.id, name: e.name}))
       ];
     }
   }, [params.type, categoriesData, employeesData]);
@@ -103,13 +102,7 @@ export default function SelecaoEntidadeScreen() {
     router.back();
   };
 
-  const handleAddNew = () => {
-    if (params.type === 'categoria') {
-      router.push('/(main)/(stack)/categorias/nova-categoria' as any);
-    } else {
-      router.push('/(main)/(stack)/funcionarios/novo-funcionario' as any);
-    }
-  };
+
 
   return (
     <View style={styles.container}>
@@ -142,6 +135,7 @@ export default function SelecaoEntidadeScreen() {
               onPress={() => handleSelect(item)}
               activeOpacity={0.7}
             >
+              
               <Text style={[styles.rowText, isSelected && styles.rowTextSelected]}>
                 {item.name}
               </Text>
@@ -160,15 +154,12 @@ export default function SelecaoEntidadeScreen() {
       {params.type === "profissionais" && (
         <View style={styles.footer}>
           <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmMultiSelection} activeOpacity={0.8}>
-            <Text style={styles.confirmText}>Confirmar Duração</Text>
+            <Text style={styles.confirmText}>OK</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      <FabCustom 
-        onPress={handleAddNew} 
-        label={params.type === 'categoria' ? 'Nova Categoria' : 'Novo Funcionário'}
-      />
+      
     </View>
   );
 }
@@ -262,7 +253,7 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     backgroundColor: Colors.corButton,
-    height: a(48),
+    height: a(40),
     borderRadius: td(10),
     justifyContent: 'center',
     alignItems: 'center',

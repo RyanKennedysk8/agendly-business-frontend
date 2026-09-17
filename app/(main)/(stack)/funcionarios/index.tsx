@@ -118,14 +118,11 @@ export default function FuncionariosScreen() {
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           alwaysBounceVertical={false}
           overScrollMode="never"
-          
-          // Mapeamento do evento onScroll para a variável Animated.Value
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false } // false pois animamos altura/margem no header
+            { useNativeDriver: false } 
           )}
-          scrollEventThrottle={16} // Define a frequência de eventos para ~60fps
-
+          scrollEventThrottle={16} 
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="people-circle-outline" size={td(48)} color="#E2E8F0" />

@@ -42,9 +42,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: l(16),
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor:Colors.borderHairLine
+    paddingHorizontal: l(16)
   },
   sideContainer: {
     width: td(60),
