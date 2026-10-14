@@ -1,37 +1,127 @@
-import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import React, { useEffect } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+} from 'react-native';
 import { BaseToastProps } from 'react-native-toast-message';
-import { Feather } from '@expo/vector-icons'; 
+import { Feather } from '@expo/vector-icons';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+
 import { a, l, td } from '../../constants/responsive';
 import { fonts } from '@assets/fonts/fonts';
 
-/*
-  Definimos um componente base para nosso toast.
-  Isso nos dá um visual coeso que se parece com as "pílulas" do iOS.
-*/
-export const ToastBase = ({ text1, text2, type }: {
+type ToastType = 'success' | 'error' | 'info';
+
+const TOAST_COLORS: Record<ToastType, string> = {
+  success: '#3FAE5A',
+  error: '#D9534F',
+  info: '#4387C5',
+};
+
+const TOAST_ICONS: Record<ToastType, keyof typeof Feather.glyphMap> = {
+  success: 'check',
+  error: 'alert-triangle',
+  info: 'info',
+};
+
+export const ToastBase = ({
+  text1,
+  text2,
+  type,
+}: {
   text1?: string;
   text2?: string;
-  type: 'success' | 'error' | 'info';
+  type: ToastType;
 }) => {
-  const iconName = type === 'success' ? 'check-circle' : type === 'error' ? 'alert-triangle' : 'info';
-  const iconColor = type === 'success' ? '#4CAF50' : type === 'error' ? '#F44336' : '#2196F3';
-  const backgroundColor = '#333333'; // Um fundo escuro, estilo "Dynamic Island"
+  const backgroundColor = TOAST_COLORS[type];
+  const iconName = TOAST_ICONS[type];
+
+  const scale = useSharedValue(0.94);
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(-6);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, {
+      duration: 160,
+      easing: Easing.out(Easing.quad),
+    });
+
+    translateY.value = withTiming(0, {
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+    });
+
+    scale.value = withSpring(1, {
+      damping: 18,
+      stiffness: 220,
+      mass: 0.6,
+    });
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [
+      {
+        translateY: translateY.value,
+      },
+      {
+        scale: scale.value,
+      },
+    ],
+  }));
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
-      <Feather name={iconName} size={td(22)} color={iconColor} style={styles.icon} />
-      <View style={styles.textContainer}>
-        {text1 && <Text style={styles.text1}>{text1}</Text>}
-        {text2 && <Text style={styles.text2}>{text2}</Text>}
+    <Animated.View style={[styles.wrapper, animatedStyle]}>
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor,
+          },
+        ]}
+      >
+        <View style={styles.highlight} />
+
+        <View style={styles.iconContainer}>
+          <Feather
+            name={iconName}
+            size={td(16)}
+            color="#FFFFFF"
+          />
+        </View>
+
+        <View style={styles.textContainer}>
+          {text1 && (
+            <Text
+              style={styles.text1}
+              
+            >
+              {text1}
+            </Text>
+          )}
+
+          {text2 && (
+            <Text
+              style={styles.text2}
+            
+            >
+              {text2}
+            </Text>
+          )}
+        </View>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
-
 export const toastConfig = {
-  
   success: ({ text1, text2 }: BaseToastProps) => (
     <ToastBase
       text1={text1}
@@ -40,7 +130,6 @@ export const toastConfig = {
     />
   ),
 
-  
   error: ({ text1, text2 }: BaseToastProps) => (
     <ToastBase
       text1={text1}
@@ -48,7 +137,6 @@ export const toastConfig = {
       type="error"
     />
   ),
-
 
   info: ({ text1, text2 }: BaseToastProps) => (
     <ToastBase
@@ -60,40 +148,87 @@ export const toastConfig = {
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    width: 'auto',
+    alignSelf: 'center',
+    maxWidth:"90%"
+  },
+
   container: {
-    // A altura é flexível, mas definimos min-height
-    width: '90%', // Usar porcentagem ou l()
-    minHeight: a(50),
+    minHeight: a(44),
+
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: l(15),
-    paddingVertical: a(10),
-    borderRadius: l(25), // Arredondamento alto para o visual "pílula"
-    // Sombra para elevação (importante no iOS)
+
+    paddingHorizontal: l(13),
+    paddingVertical: a(7),
+
+    borderRadius: l(22),
+
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.16)',
+
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    // Elevação para Android
-    elevation: 5,
+    shadowOpacity: 0.18,
+    shadowRadius: 9,
+
+    elevation: 6,
+
+    overflow: 'hidden',
   },
-  icon: {
-    marginRight: l(12),
+
+  highlight: {
+    position: 'absolute',
+
+    top: 0,
+    left: l(16),
+    right: l(16),
+
+    height: a(1),
+
+    backgroundColor: 'rgba(255, 255, 255, 0.30)',
   },
+
+  iconContainer: {
+    width: a(25),
+    height: a(25),
+
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    marginRight: l(8),
+
+    borderRadius: a(13),
+
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+  },
+
   textContainer: {
-    flex: 1, 
+    flexShrink: 1,
+    justifyContent: 'center',
   },
+
   text1: {
-    fontSize: td(15),
-    fontFamily:fonts.robotoMedium,
+    fontSize: td(14),
+
+    fontFamily: fonts.robotoMedium,
+
     color: '#FFFFFF',
+
+    letterSpacing: 0,
   },
+
   text2: {
-    fontSize: td(13),
-    fontFamily:fonts.robotoMedium,
-    color: '#E0E0E0',
+    marginTop: a(1),
+
+    fontSize: td(12),
+
+    fontFamily: fonts.robotoMedium,
+
+    color: 'rgba(255, 255, 255, 0.78)',
   },
 });

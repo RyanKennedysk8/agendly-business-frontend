@@ -63,6 +63,12 @@ export interface AppointmentDetailDTO {
     employeeColorHex?: string;
 }
 
+export interface AppointmentCheckoutDTO{
+  finalPrice: number;
+  actualEndTime: string;
+  checkoutNotes: string;
+}
+
 export enum AppointmentStatus {
   PENDING_CONFIRMATION = 'PENDING_CONFIRMATION',
   CONFIRMED = 'CONFIRMED',

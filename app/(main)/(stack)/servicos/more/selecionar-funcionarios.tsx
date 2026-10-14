@@ -35,8 +35,8 @@ export default function SelecionarFuncionariosScreen() {
   // 3. Sincronização Inicial: Lê do Zustand e preenche a tela
   useEffect(() => {
     if (employees.length > 0 && !hasInitialized.current) {
-      if (form.employeeIds.includes('ALL')) {
-        // Se no Zustand estiver ALL, marca todos os reais que vieram da API
+      // Se no Zustand estiver 'ALL' (retrocompatibilidade) ou a lista estiver vazia (novo serviço)
+      if (form.employeeIds.includes('ALL') || form.employeeIds.length === 0) {
         setSelectedIds(new Set(employees.map(emp => emp.id)));
       } else {
         // Senão, marca apenas os que estão no Zustand
@@ -78,13 +78,14 @@ export default function SelecionarFuncionariosScreen() {
     });
   };
 
-  // 4. Salvar: Escreve de volta no Zustand e volta pra tela de formulário
+  // 4. Salvar: Escreve os UUIDs reais de volta no Zustand
   const handleSave = () => {
     const selectedArray = Array.from(selectedIds);
     
     if (selectedArray.length === totalEmployees || selectedArray.length === 0) {
-      // Se marcou todos (ou não marcou nenhum, assumimos "Todos" como padrão para não quebrar o app)
-      form.setField('employeeIds', ['ALL']);
+      // CORREÇÃO: Em vez de enviar 'ALL', mapeia todos os UUIDs reais do banco!
+      const allEmployeeIds = employees.map(emp => emp.id);
+      form.setField('employeeIds', allEmployeeIds);
       form.setField('employeeNames', 'Todos (Padrão)');
     } else {
       // Se marcou alguns específicos
@@ -97,7 +98,6 @@ export default function SelecionarFuncionariosScreen() {
 
   // Renderização do Avatar (Foto real ou Inicial do Nome)
   const renderAvatar = (emp: any) => {
-    // Tenta usar a URL da foto (ajuste "profileImageUrl" ou "photoUrl" de acordo com seu DTO real)
     const photoUrl = emp.profileImageUrl || emp.photoUrl; 
     
     if (photoUrl) {

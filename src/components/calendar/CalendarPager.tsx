@@ -105,9 +105,6 @@ export const CalendarPager = () => {
         return () => clearTimeout(timeout);
     }, [selectedDate]);
 
-    // ========================================================================
-    // MOTOR DE CARROSSEL INFINITO (Swipe Manual do Usuário)
-    // ========================================================================
     const handleMomentumScrollEnd = (e: any) => {
         const x = e.nativeEvent.contentOffset.x;
         
@@ -132,19 +129,6 @@ export const CalendarPager = () => {
             else if (viewMode === 'WEEK') newDate.setDate(newDate.getDate() + 7);
             
             setSelectedDate(newDate);
-        }
-    };
-
-    // ========================================================================
-    // MOTOR DE OVERSCROLL DO STAFF DAILY VIEW (Ação Programática)
-    // ========================================================================
-    const handleOverscrollNavigation = (direction: 'PREV' | 'NEXT') => {
-        // Ao invés de setar a data direto, nós forçamos o ScrollView a rolar visualmente!
-        // Quando a rolagem terminar, o `handleMomentumScrollEnd` acima será chamado automaticamente.
-        if (direction === 'PREV') {
-            scrollRef.current?.scrollTo({ x: 0, y: 0, animated: true });
-        } else {
-            scrollRef.current?.scrollTo({ x: WINDOW_WIDTH * 2, y: 0, animated: true });
         }
     };
 
@@ -183,7 +167,6 @@ export const CalendarPager = () => {
 
     const renderPageContent = (daysArray: Date[], isAdjacentPage: boolean = false) => {
         if (viewMode === 'DAY') {
-            // As páginas laterais SEMPRE carregam o Placeholder (Custo Zero de RAM)
             if (isAdjacentPage || (transitionType === 'DAY' && isLoadingData)) {
                 return <DailyLoadingPlaceholder date={daysArray[0]} />;
             }
@@ -196,7 +179,6 @@ export const CalendarPager = () => {
                     operatingHours={operatingHours} 
                     isRefetching={isRefetching} 
                     onRefresh={refetch} 
-                    onNavigateDay={handleOverscrollNavigation}
                 />
             );
         } else {
@@ -218,7 +200,6 @@ export const CalendarPager = () => {
                 onNavigateDate={handleHeaderDateNavigation}
             />
 
-            {/* O PagerView antigo foi substituído por este ScrollView Carrossel de Alta Performance */}
             <ScrollView
                 ref={scrollRef}
                 horizontal
@@ -227,7 +208,7 @@ export const CalendarPager = () => {
                 overScrollMode="never"
                 showsHorizontalScrollIndicator={false}
                 onMomentumScrollEnd={handleMomentumScrollEnd}
-                contentOffset={{ x: WINDOW_WIDTH, y: 0 }} // Inicia sempre focado no centro (Página 1)
+                contentOffset={{ x: WINDOW_WIDTH, y: 0 }} 
                 scrollEventThrottle={16}
                 style={styles.pager}
             >
@@ -264,7 +245,7 @@ const styles = StyleSheet.create({
     placeholderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' },
     placeholderText: { color: '#64748B' },
     globalOverlay: {
-        ...StyleSheet.absoluteFillObject,
+        width:1,
         backgroundColor: 'rgba(0,0,0,0.5)',
         zIndex: 1000, 
         justifyContent: 'center',

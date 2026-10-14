@@ -1,20 +1,26 @@
-// app/(main)/(tabs)/clientes/index.tsx
-import React, { useState, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, KeyboardAvoidingView, Platform, TouchableOpacity, Animated } from 'react-native';
+import { useState, useMemo, useCallback} from 'react';
+import { View, Text, StyleSheet, Pressable, KeyboardAvoidingView, Platform, TouchableOpacity,Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
+
 import { l, a, td } from '@/constants/responsive';
 import { Colors } from '@/colors/color';
 import { fonts } from '@/assets/fonts/fonts';
-import { ClientsDTO, MOCK_CLIENTS } from '@/mocks/clientes';
 import { SearchHeaderScreens } from '@/components/layout/header';
 import { EmptyList } from '@/components/shared/EmptyList';
 import { FabCustom } from '@/components/shared/FabCustom';
+import { SkeletonList, ClientSkeleton } from '@/components/shared/SkeletonList';
 
-// Invólucro de Alta Ordem (HOC) para interceptação de eventos nativos na Thread UI
-const AnimatedFlashList = Animated.createAnimatedComponent(FlashList<ClientsDTO>);
+import { useCompanyClients, ClientSummaryDTO } from '@/hooks/useCompanyClients';
+
+const formatPhone = (phone: string) => {
+  const p = phone.replace(/\D/g, '');
+  if (p.length === 11) return `(${p.substring(0, 2)}) ${p.substring(2, 7)}-${p.substring(7, 11)}`;
+  if (p.length === 10) return `(${p.substring(0, 2)}) ${p.substring(2, 6)}-${p.substring(6, 10)}`;
+  return phone;
+};
 
 export default function ClientesScreen() {
   const insets = useSafeAreaInsets();
@@ -22,73 +28,67 @@ export default function ClientesScreen() {
   
   const [searchText, setSearchText] = useState('');
 
-  // Persistência em memória (RAM) do vetor de animação Y sem disparar trigger de renderização
-  const scrollY = useRef(new Animated.Value(0)).current;
+  const { data: clients = [], isLoading } = useCompanyClients();
 
   const filteredClients = useMemo(() => {
-    if (!searchText.trim()) return MOCK_CLIENTS;
+    if (!searchText.trim()) return clients;
     
     const lowerSearch = searchText.toLowerCase().trim();
     const digitsOnlySearch = lowerSearch.replace(/\D/g, '');
 
-    return MOCK_CLIENTS.filter(c => {
+    return clients.filter(c => {
       const matchesName = c.name.toLowerCase().includes(lowerSearch);
-      
       const matchesPhone = digitsOnlySearch.length > 0 
-        ? c.phone.replace(/\D/g, '').includes(digitsOnlySearch) 
+        ? c.phone.includes(digitsOnlySearch) 
         : false;
 
       return matchesName || matchesPhone;
     });
-  }, [searchText]);
+  }, [searchText, clients]);
 
-  //Vou criar essas rotas no futuro
   const handleNewCustomer = () => {
-    router.push('/(main)/(stack)/novo-cliente' as any);
+    router.push('/(main)/(stack)/clientes/novo-cliente' as any);
   };
+  
   const handleEditCustomer = (id: string) => {
-    console.log('Navegar para o perfil do cliente:', id);
+    router.push({ pathname: '/(main)/(stack)/clientes/novo-cliente', params: { id } } as any);
   };
 
-  const renderItem = useCallback(({ item }: { item: ClientsDTO }) => {
+  const handleWhatsApp = (phone: string) => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    Linking.openURL(`whatsapp://send?phone=55${cleanPhone}`);
+  };
+
+  const renderItem = useCallback(({ item }: { item: ClientSummaryDTO }) => {
     return (
       <Pressable
         style={styles.card}
         onPress={() => handleEditCustomer(item.id)}
       >
         <View style={styles.infoContainer}>
-          <Text style={styles.customerName} numberOfLines={1}>
-            {item.name}
-          </Text>
-  
+          <View style={styles.nameRow}>
+            <Text style={styles.customerName} numberOfLines={1}>
+              {item.name}
+            </Text>
+            {item.hasAppAccount && (
+              <Ionicons name="phone-portrait-outline" size={td(14)} color={Colors.corButton} style={styles.appIcon} />
+            )}
+          </View>
           <Text style={styles.customerPhone}>
-            {item.phone}
+            {formatPhone(item.phone)}
           </Text>
         </View>
 
-        <View style={{flexDirection:"row", gap:l(5)}}>
-          <TouchableOpacity style={styles.boxHandleCLick}>
-            <Ionicons
-              name="logo-whatsapp"
-              size={td(16)}
-              color={Colors.corTextSecondary}
-            />
+        <View style={styles.actionGroup}>
+          <TouchableOpacity 
+            style={styles.boxHandleCLick}
+            onPress={() => handleWhatsApp(item.phone)}
+          >
+            <Ionicons name="logo-whatsapp" size={td(16)} color={Colors.green || '#10B981'} />
           </TouchableOpacity >
 
-          <TouchableOpacity style={styles.boxHandleCLick}>
-            <Ionicons
-              name="create-outline"
-              size={td(16)}
-              color={Colors.corTextSecondary}
-            />
-          </TouchableOpacity >
-
-          <TouchableOpacity style={styles.boxHandleCLick}>
-            <Ionicons
-              name="ellipsis-vertical"
-              size={td(16)}
-              color={Colors.corTextSecondary}
-            />
+          <TouchableOpacity style={styles.boxHandleCLick} onPress={() => handleEditCustomer(item.id)}>
+            <Ionicons name="create-outline" size={td(16)} color={Colors.corTextSecondary} />
           </TouchableOpacity >
         </View>
       </Pressable>
@@ -96,49 +96,43 @@ export default function ClientesScreen() {
   }, []);
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <Stack.Screen 
-        options={{
-          headerShown: false
-      } as any}/>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Stack.Screen options={{ headerShown: false }} />
 
       <SearchHeaderScreens
         title="Meus Clientes"
-        placeHolder='Pesquisar cliente...'
+        placeHolder='Buscar por nome ou telefone...'
         onBack={() => router.back()}
         searchValue={searchText}
         onSearchChange={setSearchText}
-        scrollY={scrollY}
       />
     
       <View style={styles.listContainer}>
-        <AnimatedFlashList
-          data={filteredClients}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled" 
-          keyboardDismissMode='on-drag'
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-     
-          // Binding do Offset Y via frame pipeline mantendo 60FPS
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false } // Interpolando margin e height, requer Thread JS (não suporta direct UI Thread)
-          )}
-          scrollEventThrottle={16} // Resolução de captura em milissegundos (~60FPS)
-          
-          ListEmptyComponent={
-            <EmptyList 
-              message="Nenhum cliente encontrado" 
-              subMessage={searchText ? 'Tente buscar com outros termos.' : 'Cadastre seu primeiro cliente para começar.'}
-            />
-          }
-        />
+        {isLoading ? (
+           <SkeletonList 
+             count={8} 
+             ItemComponent={ClientSkeleton} 
+             contentContainerStyle={styles.listContent} 
+             separatorStyle={{ display: 'none' }}
+           />
+        ) : (
+          <FlashList
+            data={filteredClients}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + a(100) }]}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled" 
+            keyboardDismissMode='on-drag'
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            ListEmptyComponent={
+              <EmptyList 
+                message="Nenhum cliente encontrado" 
+                subMessage={searchText ? 'Tente buscar com outros termos.' : 'Cadastre seu primeiro cliente para começar.'}
+              />
+            }
+          />
+        )}
       </View>
 
       <FabCustom onPress={handleNewCustomer} label='Novo cliente'/>
@@ -147,68 +141,32 @@ export default function ClientesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  listContainer: {
-    flex: 1
-  },
-  listContent: {
-    paddingBottom: a(100), paddingTop: a(10)
-  },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  listContainer: { flex: 1 },
+  listContent: { paddingTop: a(10) },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: l(20),
-    paddingVertical: a(10),
+    paddingVertical: a(12),
     borderBottomColor: Colors.border,
-    borderBottomWidth: 1
+    borderBottomWidth: StyleSheet.hairlineWidth
   },
-  separator: {
-    height: 0,
-  },
-  avatar: {
-    width: td(42),
-    height: td(42),
-    borderRadius: td(21),
-    backgroundColor: Colors.corButtonDisable,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: l(14),
-  },
-  avatarText: {
-    fontSize: td(14),
-    fontFamily: fonts?.robotoMedium,
-    color: Colors.corButton,
-  },
-  infoContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingRight: l(12),
-  },
-  customerName: {
-    fontSize: td(16),
-    fontFamily: fonts?.robotoMedium,
-    color: Colors.corText,
-    marginBottom: a(5),
-  },
-  customerPhone: {
-    fontSize: td(12),
-    fontFamily: fonts?.robotoRegular,
-    color: Colors.corTextSecondary,
-  },
+  separator: { height: 0 },
+  infoContainer: { flex: 1, justifyContent: 'center', paddingRight: l(12) },
+  nameRow: { flexDirection: 'row', alignItems: 'center', marginBottom: a(4) },
+  customerName: { fontSize: td(16), fontFamily: fonts?.robotoMedium, color: Colors.corText },
+  appIcon: { marginLeft: l(6) },
+  customerPhone: { fontSize: td(13), fontFamily: fonts?.robotoRegular, color: Colors.corTextSecondary },
+  actionGroup: { flexDirection: 'row', gap: l(8) },
   boxHandleCLick: {
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Colors.corButtonSearch,
-    paddingVertical: a(15),
-    paddingHorizontal: l(10),
+    backgroundColor: '#F8FAFC',
+    width: td(36),
+    height: td(36),
     borderRadius: td(8),
-  },
-  metaValue: {
-    fontSize: td(12.5),
-    fontFamily: fonts?.robotoMedium,
-    color: Colors.corTextStrong,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
 });

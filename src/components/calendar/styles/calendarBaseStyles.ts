@@ -64,7 +64,7 @@ export const calendarBaseStyles = StyleSheet.create({
     },
 
     absoluteGridLines: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         zIndex: 1,
         
     },
@@ -87,7 +87,7 @@ export const calendarBaseStyles = StyleSheet.create({
     },
 
     columnsWrapper: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         flexDirection: 'row',
         zIndex: 3,
     },

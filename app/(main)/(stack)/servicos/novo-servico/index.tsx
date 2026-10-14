@@ -34,6 +34,7 @@ import { FormSelectTile } from '@/components/shared/FormSelectTile';
 import { EditeProfileHeader } from '@/components/layout/header';
 import { useCompanyCategories } from '@/hooks/useCompanyCategories';
 import { useCompanyServices } from '@/hooks/useCompanyServices';
+import { useCompanyEmployees } from '@/hooks/useCompanyEmployees'; // <-- IMPORT ADICIONADO AQUI
 import { useServiceMutations } from '@/hooks/useServiceMutations';
 import { ServiceRequestDTO } from '@/types/company';
 import { useServiceFormStore } from '@/store/useServiceFormStore';
@@ -53,6 +54,7 @@ export default function NovoServicoScreen() {
   const { createService, updateService, deleteService} = useServiceMutations();
   const { data: categoriesData = [] } = useCompanyCategories();
   const { data: services = [] } = useCompanyServices();
+  const { data: employees = [] } = useCompanyEmployees(); // <-- BUSCA DE FUNCIONÁRIOS ADICIONADA AQUI
 
   const form = useServiceFormStore();
 
@@ -136,6 +138,9 @@ export default function NovoServicoScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // ==========================================
+  // LÓGICA DE SALVAR CORRIGIDA
+  // ==========================================
   const handleSave = async () => {
     Keyboard.dismiss();
 
@@ -144,14 +149,19 @@ export default function NovoServicoScreen() {
       return;
     }
 
-    const payloadEmployeeIds = form.employeeIds.includes('ALL') ? [] : form.employeeIds;
+    let finalEmployeeIds = form.employeeIds;
+
+    // Se estiver marcado como 'ALL' ou o array vier vazio, mapeamos todos os IDs da loja
+    if (finalEmployeeIds.includes('ALL') || finalEmployeeIds.length === 0) {
+      finalEmployeeIds = employees.map(emp => emp.id);
+    }
 
     const payload: ServiceRequestDTO = {
       name: form.name.trim(),
       price: parseFloat(form.price.replace(',', '.')),
       durationInMinutes: form.durationInMinutes,
       categoryId: form.categoryId as string,
-      employeeIds: payloadEmployeeIds,
+      employeeIds: finalEmployeeIds, // AGORA O SPRING BOOT RECEBE A LISTA CHEIA!
       isHomeService: form.isHomeService,
       isPetService: form.isPetService,
     };
@@ -198,7 +208,6 @@ export default function NovoServicoScreen() {
     );
   };
 
-  // Funções de controle do Bottom Sheet Modal
   const openCategoryModal = useCallback(() => {
     Keyboard.dismiss();
     bottomSheetModalRef.current?.present();
@@ -208,10 +217,9 @@ export default function NovoServicoScreen() {
     form.setField('categoryId', categoryId);
     form.setField('categoryName', categoryName);
     setErrors(prev => ({ ...prev, category: false }));
-    bottomSheetModalRef.current?.dismiss(); // Fecha o modal após selecionar
+    bottomSheetModalRef.current?.dismiss(); 
   };
 
-  // Renderiza o fundo escuro quando o modal sobe
   const renderBackdrop = useCallback(
     (props: any) => (
       <BottomSheetBackdrop
@@ -227,7 +235,6 @@ export default function NovoServicoScreen() {
   const isPending = createService.isPending || updateService.isPending;
 
   return (
-    // O Provider é obrigatório para o BottomSheet funcionar corretamente
     <BottomSheetModalProvider>
       <KeyboardAvoidingView
         style={styles.container}
@@ -305,7 +312,7 @@ export default function NovoServicoScreen() {
                 placeholder="Selecione uma categoria"
                 value={form.categoryName}
                 error={errors.category}
-                onPress={openCategoryModal} // Chama a função que abre o Bottom Sheet
+                onPress={openCategoryModal} 
               />
 
               <FormSelectTile
@@ -383,7 +390,7 @@ export default function NovoServicoScreen() {
         </View>
         <BottomSheetModal
           ref={bottomSheetModalRef}
-          index={0} // Começa no primeiro snap point (50%)
+          index={0} 
           snapPoints={snapPoints}
           backdropComponent={renderBackdrop}
           handleIndicatorStyle={styles.bottomSheetIndicator}
@@ -399,7 +406,6 @@ export default function NovoServicoScreen() {
               <Text style={styles.emptyCategoryText}>Nenhuma categoria cadastrada.</Text>
             </View>
           ) : (
-            // BottomSheetFlatList é nativo para scrollar junto com a física do modal
             <BottomSheetFlatList
               data={categoriesData.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))}
               keyExtractor={item => item.id}

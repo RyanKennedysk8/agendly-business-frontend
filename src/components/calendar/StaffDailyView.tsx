@@ -1,25 +1,23 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, RefreshControl, Image } from 'react-native';
 import Animated, {
-    runOnJS,
     scrollTo,
     useAnimatedReaction,
     useAnimatedRef,
     useAnimatedScrollHandler,
-    useAnimatedStyle,
     useSharedValue
 } from 'react-native-reanimated';
 import { verticalScale as a, scale as l, moderateScale as td } from 'react-native-size-matters';
 import { fonts } from '@/assets/fonts/fonts';
-import { StatusTheme, AppointmentStatus } from '@/types/status';
 import { TimeAxis } from './TimeAxis';
 import { TimeGrid } from './TimeGrid';
-import { getDailyWorkBounds } from '@/utils/workTimeEngine';
+import { getDailyWorkBounds} from '@/utils/workTimeEngine';
 import { processEmployeeAppointments } from '@/utils/overLapEngine';
-import { Colors } from '@/colors/color';
+import { Colors} from '@/colors/color';
 import { MINUTE_HEIGHT } from '@/utils/calendarMetrics';
 import { AXIS_WIDTH, COLUMN_WIDTH, HEADER_HEIGHT } from '@/components/calendar/styles/constants/calendarLayout';
 import { CalendarColors } from './styles/constants/calendarColors';
+import { getThemeForAppointment } from '@/utils/appointmentUtils';
 
 const WINDOW_WIDTH = Dimensions.get('window').width;
 
@@ -50,10 +48,11 @@ const getEmployeeHoursForToday = (employee: any, date: Date, storeOperatingHours
     return 'Folga / Fechado';
 };
 
+
+
 const formatApptTime = (isoString: string) => {
     return new Date(isoString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 };
-
 
 interface StaffDailyViewProps {
     date: Date;
@@ -62,7 +61,6 @@ interface StaffDailyViewProps {
     operatingHours: any[];
     isRefetching?: boolean;
     onRefresh?: () => void;
-    onNavigateDay?: (direction: 'PREV' | 'NEXT') => void;
 }
 
 export const StaffDailyView = ({ 
@@ -71,8 +69,7 @@ export const StaffDailyView = ({
     employees, 
     operatingHours,
     isRefetching = false,
-    onRefresh,
-    onNavigateDay
+    onRefresh
 }: StaffDailyViewProps) => {
     
     const headerRef = useAnimatedRef<Animated.ScrollView>();
@@ -85,29 +82,13 @@ export const StaffDailyView = ({
         ? WINDOW_WIDTH - AXIS_WIDTH 
         : COLUMN_WIDTH;
 
-    const viewportWidth = WINDOW_WIDTH - AXIS_WIDTH;
-    const totalContentWidth = employees.length * dynamicColumnWidth;
-    const maxScrollX = Math.max(0, totalContentWidth - viewportWidth);
-    const PULL_THRESHOLD = l(60); 
-
-    const handleNavigation = (direction: 'PREV' | 'NEXT') => {
-        if (onNavigateDay) onNavigateDay(direction);
-    };
-
     const onHeaderScroll = useAnimatedScrollHandler({
         onScroll: (e) => {
             if (activeScroller.value === 1) {
                 scrollX.value = e.contentOffset.x;
             }
         },
-        onBeginDrag: () => { activeScroller.value = 1; },
-        onEndDrag: (e) => {
-            if (e.contentOffset.x < -PULL_THRESHOLD) {
-                runOnJS(handleNavigation)('PREV');
-            } else if (e.contentOffset.x > maxScrollX + PULL_THRESHOLD) {
-                runOnJS(handleNavigation)('NEXT');
-            }
-        }
+        onBeginDrag: () => { activeScroller.value = 1; }
     });
 
     const onGridScroll = useAnimatedScrollHandler({
@@ -116,14 +97,7 @@ export const StaffDailyView = ({
                 scrollX.value = e.contentOffset.x;
             }
         },
-        onBeginDrag: () => { activeScroller.value = 2; },
-        onEndDrag: (e) => {
-            if (e.contentOffset.x < -PULL_THRESHOLD) {
-                runOnJS(handleNavigation)('PREV');
-            } else if (e.contentOffset.x > maxScrollX + PULL_THRESHOLD) {
-                runOnJS(handleNavigation)('NEXT');
-            }
-        }
+        onBeginDrag: () => { activeScroller.value = 2; }
     });
 
     useAnimatedReaction(
@@ -136,41 +110,6 @@ export const StaffDailyView = ({
             }
         }
     );
-
-    const headerBounceStyle = useAnimatedStyle(() => {
-        let translateX = 0;
-        if (activeScroller.value === 2) {
-            if (scrollX.value < 0) {
-                translateX = -scrollX.value; 
-            } else if (scrollX.value > maxScrollX) {
-                translateX = -(scrollX.value - maxScrollX); 
-            }
-        }
-        return { transform: [{ translateX }] };
-    });
-
-    const gridBounceStyle = useAnimatedStyle(() => {
-        let translateX = 0;
-        if (activeScroller.value === 1) {
-            if (scrollX.value < 0) {
-                translateX = -scrollX.value; 
-            } else if (scrollX.value > maxScrollX) {
-                translateX = -(scrollX.value - maxScrollX); 
-            }
-        }
-        return { transform: [{ translateX }] };
-    });
-
-    // ========================================================================
-    // CORREÇÃO: Regra da Parede Fixa para o Eixo Y
-    // ========================================================================
-    const axisBounceStyle = useAnimatedStyle(() => {
-        let translateX = 0;
-        if (scrollX.value < 0) {
-            translateX = -scrollX.value; 
-        }
-        return { transform: [{ translateX }] };
-    });
 
     const { startHour, endHour } = useMemo(() => getDailyWorkBounds(operatingHours, date), [operatingHours, date]);
 
@@ -191,35 +130,32 @@ export const StaffDailyView = ({
                 }
             >
                 <View style={styles.headerRow}>
-                    <Animated.View style={[
-                        {width: AXIS_WIDTH, height: HEADER_HEIGHT, backgroundColor: Colors.white, zIndex: 50, position: "absolute"},
-                        axisBounceStyle
-                    ]} />
+                    <View style={{width: AXIS_WIDTH, height: HEADER_HEIGHT, backgroundColor: Colors.white, zIndex: 50, position: "absolute"}} />
                     
                     <Animated.ScrollView
                         ref={headerRef}
                         horizontal
-                        bounces={true} 
-                        overScrollMode="always" 
+                        bounces={false} 
+                        overScrollMode="never" 
                         showsHorizontalScrollIndicator={false}
                         onScroll={onHeaderScroll}
                         scrollEventThrottle={16}
                         style={styles.headerScrollContainer}
                     >
-                        <Animated.View style={[{ flexDirection: 'row' }, headerBounceStyle]}>
+                        <View style={[{ flexDirection: 'row' }]}>
                             <View style={styles.cornerBlock} />
                             {employees.map((emp, index) => (
-                                  <View
-                                  key={emp.id}
-                                  style={[
-                                      styles.employeeHeader,
-                                      {
-                                          width: dynamicColumnWidth,
-                                          borderRightWidth: index === employees.length - 1 ? 0 : 1,
-                                          borderRightColor: CalendarColors.dayDivider,
-                                      },
-                                  ]}
-                              >
+                                <View
+                                    key={emp.id}
+                                    style={[
+                                        styles.employeeHeader,
+                                        {
+                                            width: dynamicColumnWidth,
+                                            borderRightWidth: index === employees.length - 1 ? 0 : 1,
+                                            borderRightColor: CalendarColors.dayDivider,
+                                        },
+                                    ]}
+                                >
                                     <View style={styles.containerAvatar}>
                                         {emp.photoUrl ? (
                                             <Image source={{ uri: emp.photoUrl }} style={[styles.avatar]} />
@@ -237,30 +173,29 @@ export const StaffDailyView = ({
                                     </View>
                                 </View>
                             ))}
-                        </Animated.View>
+                        </View>
                     </Animated.ScrollView>
                 </View>
 
                 <View style={[styles.bodyRow, { height: GRID_HEIGHT }]}>
                     
-                    <Animated.View style={[styles.timeAxisContainer, axisBounceStyle]}>
+                    <View style={styles.timeAxisContainer}>
                         <TimeAxis date={date} operatingHours={operatingHours} />
-                    </Animated.View>
+                    </View>
 
                     <Animated.ScrollView 
                         ref={gridRef}
                         horizontal 
-                        bounces={true} 
-                        overScrollMode="always" 
+                        bounces={false} 
+                        overScrollMode="never" 
                         showsHorizontalScrollIndicator={false}
                         onScroll={onGridScroll}
                         scrollEventThrottle={16}
                         style={styles.matrixHorizontalScroll}
                     >
-                        <Animated.View style={[{ flexDirection: 'row' }, gridBounceStyle]}>
+                        <View style={[{ flexDirection: 'row' }]}>
                             {employees.map((emp, index) => {
                                 const empAppointments = processEmployeeAppointments(appointments, emp.id, date, startHour);
-                                
                                 return (
                                     <View
                                         key={emp.id}
@@ -273,12 +208,10 @@ export const StaffDailyView = ({
                                             },
                                         ]}
                                     >
-                                        <TimeGrid date={date} operatingHours={operatingHours} />
-                                        
+                                        <TimeGrid date={date} operatingHours={operatingHours} employee={emp} />
+                                       
                                         {empAppointments.map(appt => {
-                                            const currentStatus = (appt.status as AppointmentStatus) || AppointmentStatus.PENDING_CONFIRMATION;
-                                            const theme = StatusTheme[currentStatus] || StatusTheme[AppointmentStatus.PENDING_CONFIRMATION];
-                                            
+                                            const { theme } = getThemeForAppointment(appt);
                                             const clientName = appt.clientName || (appt.clientId && appt.clientName) || 'Cliente';
                                             const serviceName = appt.serviceName || (appt.serviceId && appt.serviceName) || 'Serviço';
                                             const timeLabel = `${formatApptTime(appt.startTime)} - ${formatApptTime(appt.endTime)}`;
@@ -287,7 +220,7 @@ export const StaffDailyView = ({
 
                                             return (
                                                 <View 
-                                                    key={appt.appointmentId || appt.appointmentId || appt.startTime} 
+                                                    key={appt.appointmentId || appt.companyId || appt.startTime} 
                                                     style={[
                                                         styles.appointmentCard, 
                                                         { 
@@ -297,7 +230,7 @@ export const StaffDailyView = ({
                                                             width: appt.layout.width,
                                                             backgroundColor: theme.bg,
                                                             borderColor: theme.border,
-                                                            zIndex: appt.layout.zIndex,
+                                                            zIndex: appt.layout.zIndex || 10,
                                                         }
                                                     ]}
                                                 >
@@ -328,7 +261,7 @@ export const StaffDailyView = ({
                                     </View>
                                 );
                             })}
-                        </Animated.View>
+                        </View>
                     </Animated.ScrollView>
                 </View>
             </ScrollView>
@@ -337,28 +270,145 @@ export const StaffDailyView = ({
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FFFFFF' },
-    masterVerticalScroll: { flex: 1 },
-    masterVerticalContent: { flexGrow: 1 },
-    headerRow: { flexDirection: 'row', height: HEADER_HEIGHT, zIndex: 10 },
-    cornerBlock: { width: AXIS_WIDTH, backgroundColor: Colors.white, zIndex: 20 },
-    headerScrollContainer: { flex: 1, backgroundColor: '#FFFFFF' },
-    employeeHeader: { height: HEADER_HEIGHT, flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', paddingHorizontal: l(5) },
-    employeeName: { fontSize: td(12), fontFamily: fonts?.robotoMedium, color: Colors.corText },
-    employeeOperatingHours: { fontSize: td(10), fontFamily: fonts?.robotoRegular, color: Colors.corTextSecondary },
-    bodyRow: { flexDirection: 'row', flex: 1 },
-    timeAxisContainer: { width: l(30), backgroundColor: Colors.white, zIndex: 100 },
-    matrixHorizontalScroll: { flex: 1 },
-    employeeColumn: { position: 'relative' },
-    appointmentCard: { position: 'absolute', borderRadius: td(6), borderWidth: 1, padding: td(4), flexDirection: 'row', overflow: 'hidden' },
-    statusIndicator: { width: td(4), height: '100%', borderRadius: td(2), marginRight: l(4) },
-    cardContent: { flex: 1, justifyContent: 'flex-start', paddingLeft: l(2) },
-    cardContentShort: { flex: 1, justifyContent: 'center', paddingLeft: l(2) },
-    timeText: { fontSize: td(10), fontFamily: fonts?.robotoBold || 'System' },
-    serviceName: { fontSize: td(12), fontFamily: fonts?.robotoMedium || 'System', marginTop: a(2) },
-    clientName: { fontSize: td(11), fontFamily: fonts?.robotoRegular || 'System', opacity: 0.8 },
-    dotSeparator: { fontSize: td(10), opacity: 0.5 },
-    initials: { fontSize: td(14), fontFamily: fonts?.robotoMedium || 'System', color: Colors.corTextSecondary },
-    containerAvatar: { backgroundColor: Colors.gray || '#F1F5F9', width: td(30), height: td(30), borderRadius: td(15), marginRight: l(8), justifyContent: 'center', alignItems: 'center' },
-    avatar: { width: td(30), height: td(30), borderRadius: td(15), backgroundColor: Colors.corContainer || '#E2E8F0' },
-});
+    container: {
+      flex: 1,
+      backgroundColor: '#FFFFFF',
+    },
+  
+    masterVerticalScroll: {
+      flex: 1,
+    },
+  
+    masterVerticalContent: {
+      flexGrow: 1,
+    },
+  
+    headerRow: {
+      flexDirection: 'row',
+      height: HEADER_HEIGHT,
+      zIndex: 10,
+    },
+  
+    cornerBlock: {
+      width: AXIS_WIDTH,
+      backgroundColor: Colors.white,
+      zIndex: 20,
+    },
+  
+    headerScrollContainer: {
+      flex: 1,
+      backgroundColor: '#FFFFFF',
+    },
+  
+    employeeHeader: {
+      height: HEADER_HEIGHT,
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      paddingHorizontal: l(5),
+    },
+  
+    employeeName: {
+      fontSize: td(12),
+      fontFamily: fonts?.robotoMedium,
+      color: Colors.corText,
+    },
+  
+    employeeOperatingHours: {
+      fontSize: td(10),
+      fontFamily: fonts?.robotoRegular,
+      color: Colors.corTextSecondary,
+    },
+  
+    bodyRow: {
+      flexDirection: 'row',
+      flex: 1,
+    },
+  
+    timeAxisContainer: {
+      width: l(30),
+      backgroundColor: Colors.white,
+      zIndex: 100,
+    },
+  
+    matrixHorizontalScroll: {
+      flex: 1,
+    },
+  
+    employeeColumn: {
+      position: 'relative',
+    },
+  
+    appointmentCard: {
+      position: 'absolute',
+      borderRadius: td(6),
+      borderWidth: 1,
+      padding: td(4),
+      flexDirection: 'row',
+      overflow: 'hidden',
+    },
+  
+    statusIndicator: {
+      width: td(4),
+      height: '100%',
+      borderRadius: td(2),
+      marginRight: l(4),
+    },
+  
+    cardContent: {
+      flex: 1,
+      justifyContent: 'flex-start',
+      paddingLeft: l(2),
+    },
+  
+    cardContentShort: {
+      flex: 1,
+      justifyContent: 'center',
+      paddingLeft: l(2),
+    },
+  
+    timeText: {
+      fontSize: td(10),
+      fontFamily: fonts?.robotoRegular,
+    },
+  
+    serviceName: {
+      fontSize: td(12),
+      fontFamily: fonts?.robotoRegular,
+      marginTop: a(2),
+    },
+  
+    clientName: {
+      fontSize: td(11),
+      fontFamily: fonts?.robotoRegular,
+      opacity: 0.8,
+    },
+  
+    dotSeparator: {
+      fontSize: td(10),
+      opacity: 0.5,
+    },
+  
+    initials: {
+      fontSize: td(14),
+      fontFamily: fonts?.robotoMedium || 'System',
+      color: Colors.corTextSecondary,
+    },
+  
+    containerAvatar: {
+      backgroundColor: Colors.gray || '#F1F5F9',
+      width: td(30),
+      height: td(30),
+      borderRadius: td(15),
+      marginRight: l(8),
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  
+    avatar: {
+      width: td(30),
+      height: td(30),
+      borderRadius: td(15),
+      backgroundColor: Colors.corContainer || '#E2E8F0',
+    },
+  });

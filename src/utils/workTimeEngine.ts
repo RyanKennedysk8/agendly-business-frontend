@@ -1,99 +1,151 @@
-import { OperatingHourDTO } from '@/types/company'; // Ajuste o path
+const DAYS_MAP = [
+    'SUNDAY', 
+    'MONDAY', 
+    'TUESDAY', 
+    'WEDNESDAY', 
+    'THURSDAY', 
+    'FRIDAY', 
+    'SATURDAY'
+];
 
-const MAP_DAY_INDEX_TO_STRING: Record<number, string> = {
-    0: 'SUNDAY',
-    1: 'MONDAY',
-    2: 'TUESDAY',
-    3: 'WEDNESDAY',
-    4: 'THURSDAY',
-    5: 'FRIDAY',
-    6: 'SATURDAY'
+
+const extractBreaks = (schedule: any) => {
+    if (!schedule) return [];
+
+    // 1. Se o seu backend envia um Array de intervalos
+    if (Array.isArray(schedule.breaks)) return schedule.breaks;
+    if (Array.isArray(schedule.breakTimes)) return schedule.breakTimes;
+    if (Array.isArray(schedule.intervals)) return schedule.intervals;
+
+    const start = schedule.intervalStart || schedule.breakStart || schedule.lunchStart || schedule.breakStartTime;
+    const end = schedule.intervalEnd || schedule.breakEnd || schedule.lunchEnd || schedule.breakEndTime;
+
+    if (start && end) {
+        return [{ startTime: start, endTime: end }];
+    }
+
+    return [];
 };
 
-function timeStringToMinutes(timeStr: string): number {
-    const [h, m] = timeStr.split(':').map(Number);
-    return h * 60 + m;
-}
+export const getGlobalWorkBounds = () => {
+    return { startHour: 8, endHour: 20 };
+};
 
-export function getDailyWorkBounds(operatingHours: any[], date: Date) {
-    const dayStr = MAP_DAY_INDEX_TO_STRING[date.getDay()];
-    const hoursConfig = operatingHours || [];
-    
-    // Busca a regra APENAS para o dia que está na tela
-    const todayConfig = hoursConfig.find(p => p.daysOfWeek?.includes(dayStr));
-
-    let realStartHour = 8; // Default de segurança
-    let realEndHour = 20;  // Default de segurança
-
-    if (todayConfig && todayConfig.openingTime && todayConfig.closingTime) {
-        const openMin = timeStringToMinutes(todayConfig.openingTime);
-        const closeMin = timeStringToMinutes(todayConfig.closingTime);
-        
-        realStartHour = Math.floor(openMin / 60);
-        realEndHour = Math.ceil(closeMin / 60);
-    }
-
-    // A MÁGICA DO ALÍVIO VISUAL (1h antes, 1h depois)
-    const startHour = Math.max(0, realStartHour - 1);
-    const endHour = Math.min(24, realEndHour + 1);
-
-    return { startHour, endHour };
-}
-
-export function getGlobalWorkBounds(operatingHours: OperatingHourDTO[] = []) {
-    let minMinutes = 24 * 60; 
-    let maxMinutes = 0;
-
+export const getDailyWorkBounds = (operatingHours: any[], date: Date) => {
     if (!operatingHours || operatingHours.length === 0) {
-        return { startHour: 8, endHour: 20 }; // Fallback de segurança
+        return getGlobalWorkBounds();
     }
 
-    operatingHours.forEach(period => {
-        if (period.openingTime && period.closingTime) {
-            const openMin = timeStringToMinutes(period.openingTime);
-            const closeMin = timeStringToMinutes(period.closingTime);
+    const todayStr = DAYS_MAP[date.getDay()];
+    const storeSchedule = operatingHours.find((h: any) => h.daysOfWeek?.includes(todayStr));
 
-            if (openMin < minMinutes) minMinutes = openMin;
-            if (closeMin > maxMinutes) maxMinutes = closeMin;
-        }
-    });
+    if (!storeSchedule || !storeSchedule.openingTime || !storeSchedule.closingTime || storeSchedule.isDayOff) {
+        return { startHour: 8, endHour: 18 };
+    }
 
-    const realStartHour = minMinutes === 24 * 60 ? 8 : Math.floor(minMinutes / 60);
-    const realEndHour = maxMinutes === 0 ? 20 : Math.ceil(maxMinutes / 60);
+    const startHour = parseInt(storeSchedule.openingTime.split(':')[0], 10);
+    const endHour = parseInt(storeSchedule.closingTime.split(':')[0], 10);
 
-    const startHour = Math.max(0, realStartHour - 1);
-    const endHour = Math.min(24, realEndHour + 1);
+    return {
+        startHour: Math.max(0, startHour - 1),
+        endHour: Math.min(24, endHour + 1)
+    };
+};
 
-    return { startHour, endHour };
-}
-/**
- * Verifica se um slot específico de 30 minutos deve ser pintado de cinza (fechado ou almoço)
- */
-export function isSlotClosed(date: Date, timeStr: string, operatingHours: OperatingHourDTO[] = []): boolean {
-    const dayStr = MAP_DAY_INDEX_TO_STRING[date.getDay()];
 
-    const currentPeriod = operatingHours.find(p => p.daysOfWeek?.includes(dayStr));
+export const isSlotClosedForEmployee = (
+    employee: any, 
+    date: Date, 
+    timeStr: string, // Ex: '14:15'
+    storeOperatingHours: any[]
+): boolean => {
+    const todayStr = DAYS_MAP[date.getDay()];
+    
+    const storeSchedule = storeOperatingHours?.find((h: any) => h.daysOfWeek?.includes(todayStr));
+    const empSchedule = employee?.specificOperatingHours?.find((h: any) => h.daysOfWeek?.includes(todayStr));
+    
+    const isUsingStoreSchedule = !empSchedule;
+    const scheduleToUse = isUsingStoreSchedule ? storeSchedule : empSchedule;
 
-    if (!currentPeriod || !currentPeriod.openingTime || !currentPeriod.closingTime) {
+    if (!scheduleToUse || !scheduleToUse.openingTime || !scheduleToUse.closingTime || scheduleToUse.isDayOff) {
+        return true; 
+    }
+
+    const parseTime = (str: string) => {
+        const [h, m] = str.split(':').map(Number);
+        return h * 60 + m;
+    };
+
+    const slotMinutes = parseTime(timeStr);
+    const workStart = parseTime(scheduleToUse.openingTime);
+    const workEnd = parseTime(scheduleToUse.closingTime);
+
+    // Bloqueia antes e depois do expediente
+    if (slotMinutes < workStart || slotMinutes >= workEnd) {
         return true;
     }
 
-    const currentMinutes = timeStringToMinutes(timeStr);
-    const openMinutes = timeStringToMinutes(currentPeriod.openingTime);
-    const closeMinutes = timeStringToMinutes(currentPeriod.closingTime);
-
-    if (currentMinutes < openMinutes || currentMinutes >= closeMinutes) {
-        return true;
+    // Busca os intervalos do funcionário
+    let breaks = extractBreaks(scheduleToUse);
+    
+    // Herança inteligente: Se o funcionário tem horário específico mas não cadastrou pausa, puxa a pausa da loja
+    if (!isUsingStoreSchedule && breaks.length === 0) {
+        breaks = extractBreaks(storeSchedule);
     }
 
-    if (currentPeriod.breakStartTime && currentPeriod.breakEndTime) {
-        const breakStart = timeStringToMinutes(currentPeriod.breakStartTime);
-        const breakEnd = timeStringToMinutes(currentPeriod.breakEndTime);
-
-        if (currentMinutes >= breakStart && currentMinutes < breakEnd) {
-            return true;
+    // Aplica o bloqueio do intervalo (Hachuras diagonais)
+    for (const brk of breaks) {
+        if (brk.startTime && brk.endTime) {
+            const bStart = parseTime(brk.startTime);
+            const bEnd = parseTime(brk.endTime);
+            
+            if (slotMinutes >= bStart && slotMinutes < bEnd) {
+                return true;
+            }
         }
     }
 
     return false;
-}
+};
+
+
+export const isSlotClosed = (
+    date: Date, 
+    timeStr: string, 
+    storeOperatingHours: any[]
+): boolean => {
+    const todayStr = DAYS_MAP[date.getDay()];
+    const storeSchedule = storeOperatingHours?.find((h: any) => h.daysOfWeek?.includes(todayStr));
+
+    if (!storeSchedule || !storeSchedule.openingTime || !storeSchedule.closingTime || storeSchedule.isDayOff) {
+        return true; 
+    }
+
+    const parseTime = (str: string) => {
+        const [h, m] = str.split(':').map(Number);
+        return h * 60 + m;
+    };
+
+    const slotMinutes = parseTime(timeStr);
+    const workStart = parseTime(storeSchedule.openingTime);
+    const workEnd = parseTime(storeSchedule.closingTime);
+
+    if (slotMinutes < workStart || slotMinutes >= workEnd) {
+        return true;
+    }
+
+    const breaks = extractBreaks(storeSchedule);
+    
+    for (const brk of breaks) {
+        if (brk.startTime && brk.endTime) {
+            const bStart = parseTime(brk.startTime);
+            const bEnd = parseTime(brk.endTime);
+            
+            if (slotMinutes >= bStart && slotMinutes < bEnd) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+};

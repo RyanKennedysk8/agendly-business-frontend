@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, 
-  Platform, KeyboardAvoidingView, LayoutAnimation, UIManager, TextInput, Modal, Alert
+  Platform, KeyboardAvoidingView, LayoutAnimation, UIManager, TextInput, Modal, Alert, RefreshControl
 } from 'react-native';
 import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +21,7 @@ import { useCategoryMutations } from '@/hooks/useCategoryMutations';
 
 import { FabCustom } from '@/components/shared/FabCustom';
 import { ServiceResponseDTO, ServiceCategoryResponseDTO } from '@/types/company';
+import { SkeletonList, ServiceSkeleton } from '@/components/shared/SkeletonList';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -39,18 +40,17 @@ export default function ServicosScreen() {
   
   const [searchText, setSearchText] = useState('');
   const [isCategoryMode, setIsCategoryMode] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
-  // Estados do Modal de Categoria (Misto para Criar e Editar)
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingCategory, setEditingCategory] = useState<{ id: string; name: string } | null>(null);
   
-  const { data: services = EMPTY_SERVICES, isLoading: isLoadingSvc } = useCompanyServices();
-  const { data: categories = EMPTY_CATEGORIES, isLoading: isLoadingCat } = useCompanyCategories();
+  // Extraímos os refetchs das requisições
+  const { data: services = EMPTY_SERVICES, isLoading: isLoadingSvc, refetch: refetchSvc } = useCompanyServices();
+  const { data: categories = EMPTY_CATEGORIES, isLoading: isLoadingCat, refetch: refetchCat } = useCompanyCategories();
   
-  const { reorderServices } = useServiceMutations(); // Se precisar do deleteService, pegue aqui
-  
-  // Pegando as mutações de categoria (certifique-se de que o deleteCategory e updateCategory existam no seu hook)
+  const { reorderServices } = useServiceMutations();
   const { createCategory, updateCategory, deleteCategory, reorderCategories } = useCategoryMutations();
 
   const isMutating = reorderServices.isPending || reorderCategories.isPending;
@@ -165,9 +165,6 @@ export default function ServicosScreen() {
     router.push({ pathname: '/(main)/(stack)/servicos/novo-servico', params: { id } } as any);
   }, [router]);
 
-  // ==========================================
-  // LÓGICA DE AÇÕES DA CATEGORIA (Editar/Excluir)
-  // ==========================================
   const handleCategoryPress = (id: string, name: string) => {
     Alert.alert(
       'Opções da Categoria',
@@ -177,9 +174,9 @@ export default function ServicosScreen() {
         { 
           text: 'Editar Nome', 
           onPress: () => {
-            setEditingCategory({ id, name }); // Seta quem estamos editando
-            setNewCategoryName(name); // Preenche o input
-            setCategoryModalVisible(true); // Abre o modal
+            setEditingCategory({ id, name });
+            setNewCategoryName(name);
+            setCategoryModalVisible(true);
           } 
         },
         { 
@@ -217,6 +214,16 @@ export default function ServicosScreen() {
     setCategoryModalVisible(true);
   };
 
+  // Dispatch de requests em paralelo para o pull-to-refresh
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([refetchSvc(), refetchCat()]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchSvc, refetchCat]);
+
   const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const formatDuration = (min: number) => min < 60 ? `${min} min` : `${Math.floor(min/60)}h ${min%60 > 0 ? min%60+'m' : ''}`;
 
@@ -230,10 +237,7 @@ export default function ServicosScreen() {
             delayLongPress={150}
             onLongPress={isCategoryMode && !isNoCategory ? drag : undefined}
             onPress={() => {
-              // Só abre as opções se NÃO for "Sem categoria" e NÃO estiver no modo de organizar
-              if (!isNoCategory && !isCategoryMode) {
-                handleCategoryPress(item.id, item.name);
-              }
+              if (!isNoCategory && !isCategoryMode) handleCategoryPress(item.id, item.name);
             }}
             disabled={isNoCategory}
             style={[styles.categoryHeader, isActive && styles.activeItem]}
@@ -244,8 +248,6 @@ export default function ServicosScreen() {
                 {item.name}
               </Text>
             </View>
-            
-            {/* Esconde o chevron no modo de organização, pois ele vira drag and drop puro */}
             {!isCategoryMode && !isNoCategory && (
               <Ionicons name="chevron-forward" size={td(20)} color={Colors.gray} />
             )}
@@ -284,10 +286,6 @@ export default function ServicosScreen() {
     );
   };
 
-  if (isLoadingSvc || isLoadingCat) {
-    return <View style={styles.center}><ActivityIndicator size="large" color="#FF7A00" /></View>;
-  }
-
   const isModalSaving = createCategory?.isPending || updateCategory?.isPending;
 
   return (
@@ -300,9 +298,7 @@ export default function ServicosScreen() {
         onBack={() => router.back()}
         searchValue={searchText}
         onSearchChange={setSearchText}
-        scrollY={new (require('react-native').Animated.Value)(0)} 
       />
-
       <View style={styles.createCategoryRow}>
         <TouchableOpacity style={styles.btnNewCategory} onPress={openNewCategoryModal}>
           <Ionicons name="add" size={td(20)} color={Colors.corText} />
@@ -313,34 +309,50 @@ export default function ServicosScreen() {
           style={styles.btnToggleMode} 
           onPress={toggleCategoryMode}
         >
-          <Ionicons 
-            name={isCategoryMode ? "checkmark-done" : "options-outline"} 
-            size={td(18)} 
-            color={isCategoryMode ? "#FF7A00" : Colors.corTextLight} 
+          <Ionicons
+            name={isCategoryMode ? "checkmark-done" : "options-outline"}
+            size={td(18)}
+            color={isCategoryMode ? Colors.corButton : Colors.corTextLight}
           />
-          <Text style={[styles.txtToggleMode, isCategoryMode && { color: '#FF7A00', fontFamily: fonts?.robotoBold }]}>
+          <Text style={[styles.txtToggleMode, isCategoryMode && { color: Colors.corButton, fontFamily: fonts?.robotoBold }]}>
             {isCategoryMode ? "Concluir Organização" : "Organizar Categorias"}
           </Text>
         </TouchableOpacity>
       </View>
 
       <View style={{ flex: 1 }}>
-        <DraggableFlatList
-          data={filteredData}
-          keyExtractor={(item) => item.type + '_' + item.id}
-          renderItem={renderItem}
-          onDragEnd={handleDragEnd}
-          contentContainerStyle={{ paddingBottom: insets.bottom + a(50) }}
-          showsVerticalScrollIndicator={false}
-          activationDistance={searchText.length > 0 ? 9999 : 0} 
-        />
+        {(isLoadingSvc || isLoadingCat) ? ( 
+          <SkeletonList 
+            count={6} 
+            ItemComponent={ServiceSkeleton} 
+            contentContainerStyle={{ paddingTop: a(10) }}
+            separatorStyle={{ display: 'none' }} 
+          />
+        ) : (
+          <DraggableFlatList
+            data={filteredData}
+            keyExtractor={(item) => item.type + '_' + item.id}
+            renderItem={renderItem}
+            onDragEnd={handleDragEnd}
+            contentContainerStyle={{ paddingBottom: insets.bottom + a(50) }}
+            showsVerticalScrollIndicator={false}
+            activationDistance={searchText.length > 0 ? 9999 : 0}
+            refreshControl={
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={onRefresh}
+                colors={[Colors.corButton || '#FF7A00']} 
+                tintColor={Colors.corButton || '#FF7A00'}
+              />
+            }
+          />
+        )}
       </View>
 
       {!isCategoryMode && (
         <FabCustom onPress={() => router.push('/(main)/(stack)/servicos/novo-servico' as any)} label='Novo serviço'  />
       )}
 
-      {/* Modal Misto: Nova Categoria e Editar Categoria */}
       <Modal visible={isCategoryModalVisible} transparent animationType="fade" onRequestClose={() => setCategoryModalVisible(false)}>
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.modalContent}>
@@ -379,11 +391,9 @@ export default function ServicosScreen() {
                   
                   try {
                     if (editingCategory) {
-                      // Edita
                       await updateCategory.mutateAsync({ id: editingCategory.id, data: { name: categoryName } });
                       Toast.show({ type: 'success', text1: 'Categoria atualizada' });
                     } else {
-                      // Cria
                       await createCategory.mutateAsync({ name: categoryName });
                       Toast.show({ type: 'success', text1: 'Categoria criada' });
                     }
@@ -415,11 +425,6 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: '#FFFFFF' 
-  },
-  center: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
   },
   createCategoryRow: {
     flexDirection: 'row',
@@ -554,31 +559,18 @@ const styles = StyleSheet.create({
     marginBottom: a(20) 
   },
   modalActions: { 
-    flexDirection: 'row', 
-    gap: l(10) 
+    flexDirection: 'row', gap: l(10), justifyContent: 'center',
   },
   modalBtnCancel: { 
-    flex: 1, 
-    height: a(44), 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: '#F1F5F9', 
-    borderRadius: td(10) 
+    height: a(40), width:"50%", justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: td(10) 
   },
   modalBtnCancelText: { 
-    color: '#64748B', 
-    fontFamily: fonts?.robotoMedium 
+    color: '#64748B', fontFamily: fonts?.robotoMedium 
   },
   modalBtnSave: { 
-    flex: 1, 
-    height: a(44), 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: Colors.corButton, 
-    borderRadius: td(10) 
+    height: a(40), width:"50%", justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.corButton, borderRadius: td(10) 
   },
   modalBtnSaveText: { 
-    color: '#FFF', 
-    fontFamily: fonts?.robotoMedium 
+    color: '#FFF', fontFamily: fonts?.robotoMedium 
   },
 });

@@ -11,7 +11,7 @@ import { Sidebar } from '@/components/layout/sidebar/Sidebar';
 const TAB_SCREENS = [
   { name: 'home', title: 'Início', icon: 'home' },
   { name: 'agendamento', title: 'Agendamentos', icon: 'calendar' }, 
-  { name: 'atendimento', title: 'Atendimento', icon: 'checkmark-circle' },
+  { name: 'atendimento', title: 'Atendimento', icon: 'bag-add' },
   { name: 'profile', title: 'Perfil', icon: 'storefront' },
 ];
 

@@ -1,6 +1,5 @@
-import { Stack } from 'expo-router';
+import { Stack,  NativeStackHeaderProps } from 'expo-router';
 import { CustomHeader } from '@components/layout/header/orquestrador/CustomHeader';
-import { NativeStackHeaderProps } from '@react-navigation/native-stack';
 
 export default function HomeStackLayout() {
   return (

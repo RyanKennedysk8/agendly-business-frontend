@@ -1,5 +1,5 @@
 import { RenderableAppointment } from '@/utils/overLapEngine';
-import React, { memo, useState } from 'react';
+import { memo, useState } from 'react';
 import { Text, TouchableOpacity, View, LayoutChangeEvent } from 'react-native';
 import { appointmentCardStyles } from './styles/appointmentCardStyles';
 import { darkenColor} from './styles/colorMapper';
@@ -43,17 +43,15 @@ export const AppointmentCard = memo(({ appointment, onPress }: AppointmentCardPr
 
     // Gatilhos responsivos baseados nas dimensões físicas reais calculadas pelo dispositivo
     const isCompactHeight = layout.height <= MINUTE_HEIGHT * 15;
-    const isNarrowWidth = currentWidth < l(45); // Se o card físico tiver menos de 45dp de largura
+    const isNarrowWidth = currentWidth < l(45); 
 
     const renderContent = () => {
-        // WIDTH REDUZIDO (VERTICAL DE ALTA DENSIDADE)
         if (isNarrowWidth) {
             return (
                 <View style={appointmentCardStyles.verticalRotationWrapper}>
                     <View style={[
                         appointmentCardStyles.verticalTextContainer, 
                         { 
-                            // Inversão geométrica pura baseada nas dimensões reais mensuradas
                             width: layout.height, 
                             height: currentWidth 
                         }
@@ -70,7 +68,6 @@ export const AppointmentCard = memo(({ appointment, onPress }: AppointmentCardPr
             );
         }
 
-        // HEIGHT CURTO (15 MINUTOS HORIZONTAL CONCATENADO)
         if (isCompactHeight) {
             return (
                 <Text 
@@ -82,7 +79,6 @@ export const AppointmentCard = memo(({ appointment, onPress }: AppointmentCardPr
             );
         }
 
-        // RENDERIZAÇÃO COMPLETA PADRÃO
         return (
             <>
                 <Text style={appointmentCardStyles.clientName} numberOfLines={1}>
@@ -102,18 +98,17 @@ export const AppointmentCard = memo(({ appointment, onPress }: AppointmentCardPr
         <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => console.log(`Abrir agendamento: ${appointment.serviceName}`)}
-            onLayout={handleLayout} // Vinculação do listener nativo de medição
+            onLayout={handleLayout} 
             style={[
                 appointmentCardStyles.cardContainer,
                 {
                     top: layout.top,
                     height: layout.height,
                     left: layout.left,
-                    width: layout.width, // Passa o DimensionValue original para renderização nativa
+                    width: layout.width,
                     zIndex: layout.zIndex,
                     backgroundColor: backgroundColor,
                     borderLeftColor: borderColor,
-                    // Remove o padding interno se estiver no modo vertical para evitar compressão de texto
                     padding: isNarrowWidth ? 0 : td(3), 
                 }
             ]}
@@ -122,8 +117,6 @@ export const AppointmentCard = memo(({ appointment, onPress }: AppointmentCardPr
         </TouchableOpacity>
     );
 }, (prevProps, nextProps) => {
-    // A memoização profunda continua checando as propriedades estruturais passadas pelo OverlapEngine.
-    // Alterações internas de state (como o measuredWidth no onLayout) ignoram o memo e atualizam a View corretamente.
     return prevProps.appointment.appointmentId === nextProps.appointment.appointmentId &&
            prevProps.appointment.layout.top === nextProps.appointment.layout.top &&
            prevProps.appointment.layout.left === nextProps.appointment.layout.left &&

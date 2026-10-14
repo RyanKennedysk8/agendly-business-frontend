@@ -1,4 +1,5 @@
 import { fonts } from '@/assets/fonts/fonts';
+import { Colors } from '@/colors/color';
 import { StyleSheet } from 'react-native';
 import { scale as l, verticalScale as a, moderateScale as td } from 'react-native-size-matters';
 
@@ -9,15 +10,12 @@ export const appointmentCardStyles = StyleSheet.create({
         overflow: 'hidden',
         borderLeftWidth: l(3), 
     },
-    // Container absoluto que ocupa todo o card pai e centraliza a View rotacionada
     verticalRotationWrapper: {
-        ...StyleSheet.absoluteFillObject, // ocupa height: '100%', width: '100%'
+        ...StyleSheet.absoluteFill,
         justifyContent: 'center',
         alignItems: 'center',
-        // Garante que o texto não vaze se o height do card (tempo) for muito curto
         overflow: 'hidden', 
     },
-    // View que sofre a inversão de largura/altura e depois é rotacionada
     verticalTextContainer: {
         justifyContent: 'center',
         alignItems: 'center',
@@ -34,7 +32,7 @@ export const appointmentCardStyles = StyleSheet.create({
     clientName: {
         fontSize: td(12),
         fontFamily: fonts.robotoBold,
-        color: '#FFFFFF',
+        color: Colors.white,
         marginBottom: a(2),
     },
     clientNameSmall: {

@@ -14,6 +14,8 @@ export type ColorPalette = {
     corTextLight:string,
     corTextStrong:string,
     corTextSearch:string,
+    corTextInfo:string,
+    corTextTitle:string,
     transparente:string;
     semiTransparente:string; 
     placeholder: string;
@@ -44,16 +46,18 @@ export type ColorPalette = {
     corBoxSearch:"#F8F8F8",
     corButtonSearch:"#E3E3E3",
 
-    corButton: '#FF7A00', 
-    corButtonDisable: "rgba(255, 122, 0, 0.3)",
+    corButton: '#008B8B', 
+    corButtonDisable: "rgba(0,139,139, 0.3)",
     corButtonOff:'#cccccc',
-    corButtonRGB:"rgba(255, 122, 0, 1)",
+    corButtonRGB:"rgba(0,139,139, 1)",
   
     corText: '#262626',              
     corTextSecondary: 'rgba(38,38,38,0.6)', 
     corTextLight: '#737373',            
     corTextStrong: '#1C1C1E',            
-    corTextSearch: '#8A8A8A',           
+    corTextSearch: '#8A8A8A',  
+    corTextInfo:'#64748B',   
+    corTextTitle:'#1E293B',      
   
     transparente:"#00000000",
     semiTransparente:"rgba(0,0,0,0.6)",
@@ -81,5 +85,62 @@ export type ColorPalette = {
     orange:'#E86A00'
   
   } as const; 
+
+  export enum AppointmentStatus {
+    PENDING_CONFIRMATION = 'PENDING_CONFIRMATION',
+    CONFIRMED = 'CONFIRMED',
+    AWAITING_COMPLETION = 'AWAITING_COMPLETION',
+    CANCELLED_BY_CLIENT = 'CANCELLED_BY_CLIENT',
+    CANCELLED_BY_COMPANY = 'CANCELLED_BY_COMPANY',
+    COMPLETED = 'COMPLETED',
+    NO_SHOW = 'NO_SHOW',
+  }
+   
+   export const StatusTheme: Record<
+   AppointmentStatus,
+   { bg: string; text: string; border: string }
+ > = {
+   [AppointmentStatus.PENDING_CONFIRMATION]: {
+     bg: '#FEF08A',
+     text: '#713F12',
+     border: '#FDE047',
+   },
+ 
+   [AppointmentStatus.CONFIRMED]: {
+     bg: '#E0F2FE',
+     text: '#075985',
+     border: '#BAE6FD',
+   },
+ 
+   [AppointmentStatus.AWAITING_COMPLETION]: {
+     bg: '#F3E8FF',
+     text: '#6B21A8',
+     border: '#D8B4FE',
+   },
+ 
+   [AppointmentStatus.COMPLETED]: {
+     bg: '#DCFCE7',
+     text: '#166534',
+     border: '#BBF7D0',
+   },
+ 
+   [AppointmentStatus.CANCELLED_BY_CLIENT]: {
+     bg: '#F1F5F9',
+     text: '#475569',
+     border: '#E2E8F0',
+   },
+ 
+   [AppointmentStatus.CANCELLED_BY_COMPANY]: {
+     bg: '#FEE2E2',
+     text: '#991B1B',
+     border: '#FECACA',
+   },
+ 
+   [AppointmentStatus.NO_SHOW]: {
+     bg: '#FECACA',
+     text: '#7F1D1D',
+     border: '#FCA5A5',
+   },
+ };
   
   export type ColorKey = keyof typeof Colors;

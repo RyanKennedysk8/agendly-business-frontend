@@ -92,7 +92,7 @@ export default function SelecaoTempoScreen() {
   );
 }
 
-const ITEM_HEIGHT = a(44);
+const ITEM_HEIGHT = a(34);
 
 const styles = StyleSheet.create({
   container: {

@@ -4,12 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { td, a, l } from '@/constants/responsive';
 import { fonts } from '@/assets/fonts/fonts';
-import { Colors } from '@/colors/color';
+import { Colors, AppointmentStatus, StatusTheme } from '@/colors/color';
 
-import {
-  AppointmentDetail,
-  AppointmentStatus,
-} from '@/types/appointments';
+import { AppointmentDetail } from '@/types/appointments';
+import { getDisplayStatus, getStatusIcon, getStatusLabel, getThemeForAppointment } from '@/utils/appointmentUtils';
 
 interface Props {
   item: AppointmentDetail;
@@ -17,86 +15,8 @@ interface Props {
   onAction: (appointmentId: string) => void;
 }
 
-const getStatusColor = (status: AppointmentStatus) => {
-  switch (status) {
-    case AppointmentStatus.CONFIRMED:
-      return '#94A3B8';
-
-    case AppointmentStatus.AWAITING_COMPLETION:
-      return '#3B82F6';
-
-    case AppointmentStatus.COMPLETED:
-      return '#22C55E';
-
-    case AppointmentStatus.PENDING_CONFIRMATION:
-      return '#F59E0B';
-
-    case AppointmentStatus.CANCELLED_BY_CLIENT:
-    case AppointmentStatus.CANCELLED_BY_COMPANY:
-    case AppointmentStatus.NO_SHOW:
-      return '#EF4444';
-
-    default:
-      return '#94A3B8';
-  }
-};
-
-const getStatusLabel = (status: AppointmentStatus) => {
-  switch (status) {
-    case AppointmentStatus.CONFIRMED:
-      return 'Aguardando';
-
-    case AppointmentStatus.AWAITING_COMPLETION:
-      return 'Em atendimento';
-
-    case AppointmentStatus.COMPLETED:
-      return 'Finalizado';
-
-    case AppointmentStatus.PENDING_CONFIRMATION:
-      return 'Pendente';
-
-    case AppointmentStatus.CANCELLED_BY_CLIENT:
-      return 'Cancelado';
-
-    case AppointmentStatus.CANCELLED_BY_COMPANY:
-      return 'Cancelado';
-
-    case AppointmentStatus.NO_SHOW:
-      return 'Não compareceu';
-  }
-};
-
-const getStatusIcon = (status: AppointmentStatus) => {
-  switch (status) {
-    case AppointmentStatus.CONFIRMED:
-      return 'time-outline';
-
-    case AppointmentStatus.AWAITING_COMPLETION:
-      return 'play-circle-outline';
-
-    case AppointmentStatus.COMPLETED:
-      return 'checkmark-circle';
-
-    case AppointmentStatus.PENDING_CONFIRMATION:
-      return 'help-circle-outline';
-
-    case AppointmentStatus.CANCELLED_BY_CLIENT:
-    case AppointmentStatus.CANCELLED_BY_COMPANY:
-      return 'close-circle';
-
-    case AppointmentStatus.NO_SHOW:
-      return 'alert-circle';
-
-    default:
-      return 'ellipse-outline';
-  }
-};
-
 const formatTime = (date: string) => {
-  return new Date(date).toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return new Date(date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 };
 
 export const QueueItem: React.FC<Props> = ({
@@ -104,13 +24,13 @@ export const QueueItem: React.FC<Props> = ({
   isLast,
   onAction,
 }) => {
-  const statusColor = getStatusColor(item.status);
+  const { status: displayStatus, theme } = getThemeForAppointment(item);
 
   const disabled =
-    item.status === AppointmentStatus.COMPLETED ||
-    item.status === AppointmentStatus.CANCELLED_BY_CLIENT ||
-    item.status === AppointmentStatus.CANCELLED_BY_COMPANY ||
-    item.status === AppointmentStatus.NO_SHOW;
+    displayStatus === AppointmentStatus.COMPLETED ||
+    displayStatus === AppointmentStatus.CANCELLED_BY_CLIENT ||
+    displayStatus === AppointmentStatus.CANCELLED_BY_COMPANY ||
+    displayStatus === AppointmentStatus.NO_SHOW;
 
   return (
     <View
@@ -118,7 +38,7 @@ export const QueueItem: React.FC<Props> = ({
         styles.container,
         {
           borderBottomWidth: isLast ? 0 : 1,
-          borderLeftColor: item.employeeColor ?? statusColor,
+          borderLeftColor: theme.text, 
         },
       ]}
     >
@@ -130,7 +50,7 @@ export const QueueItem: React.FC<Props> = ({
 
       <View style={styles.details}>
         <Text style={styles.clientName}>
-          {item.companyName}
+          {item.clientName}
         </Text>
 
         <Text style={styles.service}>
@@ -139,36 +59,29 @@ export const QueueItem: React.FC<Props> = ({
 
         <View style={styles.professionalRow}>
           <Text style={styles.professional}>
-            {item.employeeName ?? 'Sem profissional'}
+            Com: {item.employeeName ?? 'Sem profissional'}
           </Text>
         </View>
 
-        <Text
-          style={[
-            styles.status,
-            {
-              color: statusColor,
-            },
-          ]}
-        >
-          {getStatusLabel(item.status)}
-        </Text>
+        <View style={[styles.statusBadge, { backgroundColor: theme.bg, borderColor: theme.border }]}>
+          <Text style={[styles.statusText, { color: theme.text }]}>
+            {getStatusLabel(displayStatus)}
+          </Text>
+        </View>
       </View>
 
       <Pressable
         style={[
           styles.actionBtn,
-          disabled && {
-            opacity: 0.4,
-          },
+          disabled && { opacity: 0.4 },
         ]}
         onPress={() => onAction(item.appointmentId)}
         disabled={disabled}
       >
         <Ionicons
-          name={getStatusIcon(item.status)}
+          name={getStatusIcon(displayStatus)}
           size={td(24)}
-          color={statusColor}
+          color={theme.text}
         />
       </Pressable>
     </View>
@@ -184,7 +97,6 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     paddingLeft: l(12),
   },
-
   timeBox: {
     backgroundColor: '#F1F5F9',
     paddingVertical: a(6),
@@ -192,49 +104,48 @@ const styles = StyleSheet.create({
     borderRadius: td(8),
     marginRight: l(16),
   },
-
   timeText: {
     fontSize: td(14),
     fontFamily: fonts.robotoBold,
     color: Colors.corText,
   },
-
   details: {
     flex: 1,
   },
-
   clientName: {
     fontSize: td(13),
     fontFamily: fonts.robotoMedium,
     color: Colors.corText,
   },
-
   service: {
     fontSize: td(15),
     fontFamily: fonts.robotoMedium,
     color: '#64748B',
     marginTop: a(2),
   },
-
   professionalRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: l(4),
     marginTop: a(2),
   },
-
   professional: {
-    fontSize: td(10),
+    fontSize: td(11),
     color: Colors.corTextSecondary,
     fontFamily: fonts.robotoMedium,
   },
-
-  status: {
-    fontSize: td(11),
-    marginTop: a(2),
-    fontFamily: fonts.robotoMedium,
+  statusBadge: {
+    alignSelf: 'flex-start',
+    marginTop: a(6),
+    paddingHorizontal: l(8),
+    paddingVertical: a(4),
+    borderRadius: td(6),
+    borderWidth: 1,
   },
-
+  statusText: {
+    fontSize: td(10),
+    fontFamily: fonts.robotoBold,
+  },
   actionBtn: {
     padding: td(8),
   },

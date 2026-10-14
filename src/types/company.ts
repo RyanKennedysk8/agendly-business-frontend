@@ -64,9 +64,9 @@ export interface CompanyDetailResponse {
 }
   
   export interface EmployeeDTO {
+    id: string;
     name: string;
     photoUrl: string;
-    color?:string;
     daysOff: string[];
     specificOperatingHours: OperatingHourDTO[];
   }

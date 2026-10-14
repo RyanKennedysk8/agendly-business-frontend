@@ -1,10 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '@/services/api';
 
+
+export interface OperatingHourDTO {
+  id: string; 
+  dayOfWeek: string;
+  openTime: string;
+  closeTime: string;
+}
+
 export interface EmployeeSummaryDTO {
   id: string;
   name: string;
-  photoUrl?: string;
+  phone:string;
+  email:string;
+  photoUrl?: string | null;
+  daysOff: string[];
+  specificOperatingHours: OperatingHourDTO[];
 }
 
 export const useCompanyEmployees = () => {
