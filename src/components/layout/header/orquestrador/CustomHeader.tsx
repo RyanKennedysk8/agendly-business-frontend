@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
-import { NativeStackHeaderProps } from '@react-navigation/native-stack';
+import { NativeStackHeaderProps, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SharedValue } from 'react-native-reanimated';
 import { Colors } from '@colors/color';
@@ -17,6 +16,8 @@ import {
   AuthHeader, 
   ListHeader 
 } from '../';
+import { AttendanceMainHeader } from '../AttendanceMainHeader';
+import { AttendanceSubHeader } from '../AttendanceSubHeader';
 
 
 export function CustomHeader({ options }: NativeStackHeaderProps) {
@@ -24,19 +25,12 @@ export function CustomHeader({ options }: NativeStackHeaderProps) {
   const insets = useSafeAreaInsets();
   const statusBarHeights = insets.top;
   const headerType = (options as any).headerType;
-  const isSearching = (options as any).isSearching;
   const rawTitle = options.headerTitle;
   const title = typeof rawTitle === 'string' ? rawTitle : '';
-  const onSearchPressCallback = (options as any).onSearchPress;
-  const scrollY = (options as any).scrollY as SharedValue<number> | undefined;
-  const storeSearchParams = (options as any).storeSearchParams;
-  const storeInfoParams = (options as any).storeInfoParams;
   const searchHeaderParams = (options as any).searchHeaderParams;
   const subProfile = (options as any).subProfile;
   const colorIcon = (options as any).colorIcon;
-  const headerRight = options.headerRight;
-  const goNavigate = (options as any).goNavigate as () => void;
-  const showReview = (options as any).showReview as boolean;
+  const attendanceParams = (options as any).attendanceParams;
 
   switch (headerType) {
 
@@ -90,6 +84,27 @@ export function CustomHeader({ options }: NativeStackHeaderProps) {
         </View>
       );
 
+    case 'attendanceMain':
+      return (
+          <View style={[styles.safeAreaWhite, { paddingTop: statusBarHeights }]}>
+            <AttendanceMainHeader
+              title={title || 'Caixa & Operação'} 
+              {...attendanceParams} 
+            />
+          </View>
+      );
+  
+    case 'attendanceSub':
+      return (
+          <View style={[styles.safeAreaWhite, { paddingTop: statusBarHeights }]}>
+            <AttendanceSubHeader
+              title={title} 
+              onBack={attendanceParams?.onCustomBack || router.back} 
+              {...attendanceParams} 
+            />
+          </View>
+      );
+
     case 'simple':
       return(
         <View style={[styles.safeAreaHome, { paddingTop: statusBarHeights }]}>
@@ -110,7 +125,7 @@ export function CustomHeader({ options }: NativeStackHeaderProps) {
           <EditeProfileHeader 
             onBack={router.back} 
             title={title} 
-            rightComponent={headerRight ? headerRight({ tintColor: Colors.corText }) : undefined}
+            
           />
         </View>
       );

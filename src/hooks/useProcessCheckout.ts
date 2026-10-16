@@ -6,12 +6,13 @@ export const useProcessCheckout = () => {
 
   return useMutation({
     mutationFn: async (payload: any) => {
-      await api.post('/sales/checkout', payload);
+      const { data } = await api.post<{ saleId: string }>('/sales/checkout', payload);
+      return data;
     },
     onSuccess: () => {
-      // Força a lista de atendimentos e a fila do dia a recarregarem
       queryClient.invalidateQueries({ queryKey: ['attendance-history'] });
       queryClient.invalidateQueries({ queryKey: ['daily-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['standalone-sales'] });
     },
   });
 };

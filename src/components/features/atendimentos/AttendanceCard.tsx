@@ -12,7 +12,7 @@ interface Props {
   onComplete: () => void;
   onNoShow: () => void;
   onViewReceipt: () => void;
-}
+} 
 
 const formatTime = (isoDate: string) => {
   return new Date(isoDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });

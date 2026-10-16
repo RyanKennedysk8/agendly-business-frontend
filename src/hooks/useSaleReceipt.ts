@@ -21,13 +21,19 @@ export interface SaleReceipt {
   }[];
 }
 
-export const useSaleReceipt = (appointmentId?: string) => {
+export const useSaleReceipt = (params: { appointmentId?: string; saleId?: string }) => {
+  const { appointmentId, saleId } = params;
+
   return useQuery({
-    queryKey: ['sale-receipt', appointmentId],
+    queryKey: ['sale-receipt', appointmentId || saleId],
     queryFn: async () => {
+      if (saleId) {
+        const { data } = await api.get<SaleReceipt>(`/sales/${saleId}/receipt`);
+        return data;
+      }
       const { data } = await api.get<SaleReceipt>(`/sales/by-appointment/${appointmentId}`);
       return data;
     },
-    enabled: !!appointmentId,
+    enabled: !!(appointmentId || saleId),
   });
 };

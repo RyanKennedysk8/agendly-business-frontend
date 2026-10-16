@@ -16,13 +16,21 @@ const PAYMENT_LABELS: Record<string, string> = {
 };
 
 export default function ReceiptScreen() {
-  const { appointmentId } = useLocalSearchParams<{ appointmentId: string }>();
-  const { data: receipt, isLoading, isError } = useSaleReceipt(appointmentId);
+    const { appointmentId, saleId } = useLocalSearchParams<{ appointmentId?: string; saleId?: string }>();
+    const { data: receipt, isLoading, isError } = useSaleReceipt({ appointmentId, saleId });
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Comprovante de Venda', headerShadowVisible: false }} />
-
+      <Stack.Screen 
+        options={{ 
+          headerShown: true,
+          headerTitle: 'Comprovante de Venda',
+          headerType: 'attendanceSub',
+          attendanceParams: {
+            subtitle: receipt?.saleId ? `#${receipt.saleId.slice(0, 8).toUpperCase()}` : undefined,
+          }
+        } as any} 
+      />
       {isLoading ? (
         <View style={styles.centerBox}>
           <ActivityIndicator size="large" color="#FF7A00" />

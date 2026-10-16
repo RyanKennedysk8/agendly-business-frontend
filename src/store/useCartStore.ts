@@ -25,8 +25,8 @@ interface CartState {
 
   // Ações de Contexto
   setContext: (
-    companyId: string,
-    clientId?: string | null,
+    companyId?: string | null, 
+    clientId?: string | null, 
     employeeId?: string | null
   ) => void;
   
@@ -60,15 +60,27 @@ export const useCartStore = create<CartState>((set, get) => ({
   tip: 0,
   paymentMethod: null,
 
-  setContext: (companyId, clientId = null, employeeId = null) => 
+  setContext: (companyId = null, clientId = null, employeeId = null) => 
     set({ companyId, clientId, employeeId }),
 
   addItem: (item) => 
     set((state) => {
-      // Evita duplicar agendamentos: se já existir, não adiciona novamente
+      // Impede duplicação de agendamento
       if (item.type === 'APPOINTMENT' && item.referenceId) {
         const exists = state.items.some(i => i.referenceId === item.referenceId);
         if (exists) return state;
+      }
+
+      // Se for um PRODUTO ou SERVIÇO de catálogo já inserido, apenas incrementa a quantidade
+      if (item.referenceId && item.type !== 'APPOINTMENT') {
+        const existingIndex = state.items.findIndex(
+          i => i.referenceId === item.referenceId && i.type === item.type
+        );
+        if (existingIndex > -1) {
+          const updated = [...state.items];
+          updated[existingIndex].quantity += item.quantity;
+          return { items: updated };
+        }
       }
       
       const newItem: CartItem = {
@@ -123,12 +135,12 @@ export const useCartStore = create<CartState>((set, get) => ({
   buildCheckoutPayload: () => {
     const state = get();
     return {
-      companyId: state.companyId,
-      clientId: state.clientId,
-      employeeId: state.employeeId,
+      companyId: state.companyId || null,
+      clientId: state.clientId || null,
+      employeeId: state.employeeId || null,
       discount: state.discount,
       tip: state.tip,
-      paymentMethod: state.paymentMethod || 'UNDEFINED',
+      paymentMethod: state.paymentMethod || 'PIX',
       items: state.items.map(i => ({
         type: i.type,
         referenceId: i.referenceId || null,
