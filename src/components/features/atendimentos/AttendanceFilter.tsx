@@ -29,7 +29,7 @@ export const AttendanceFilter: React.FC<Props> = ({ activeFilter, onChange }) =>
   return (
     <ScrollView 
       horizontal 
-      showsHorizontalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false} 
       style={styles.container}
       contentContainerStyle={styles.content}
       bounces={false}
@@ -54,34 +54,28 @@ export const AttendanceFilter: React.FC<Props> = ({ activeFilter, onChange }) =>
 
 const styles = StyleSheet.create({
   container: {
-    maxHeight: a(50),
-    minHeight: a(50),
-    backgroundColor: Colors.white,
+    maxHeight: a(35),
   },
   content: {
-    paddingHorizontal: l(16),
+    paddingHorizontal: l(5),
     alignItems: 'center',
-    gap: l(8),
   },
   pill: {
-    paddingHorizontal: l(16),
-    paddingVertical: a(8),
-    borderRadius: td(20),
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
+    paddingHorizontal: l(15),
+    paddingVertical: a(5),
+    borderBottomWidth: 2,
     borderColor: 'transparent',
   },
   pillActive: {
-    backgroundColor: Colors.corButtonDisable, // Fundo sutil combinando com a nova cor da marca
-    borderColor: Colors.corButton,
+    borderBottomColor: Colors.corButton,
   },
   text: {
     fontSize: td(13),
-    fontFamily: fonts.robotoMedium,
-    color: Colors.corTextInfo,
+    fontFamily: fonts.robotoRegular,
+    color: Colors.corTextSecondary,
   },
   textActive: {
     color: Colors.corButton,
-    fontFamily: fonts.robotoBold,
+    fontFamily: fonts.robotoMedium,
   },
 });

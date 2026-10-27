@@ -103,7 +103,7 @@ export default function PendenciasScreen() {
       <Stack.Screen 
         options={{ 
           headerShown: true,
-          headerTitle: 'Gestão de Atendimentos',
+          headerTitle: 'Atendimentos',
           headerType: 'attendanceSub',
           attendanceParams: {
             subtitle: 'Checkouts pendentes e histórico',
@@ -121,9 +121,7 @@ export default function PendenciasScreen() {
           renderItem={({ item }) => {
             if (item.type === 'header') {
               return (
-                <View style={styles.dateHeaderContainer}>
-                  <Text style={styles.dateHeaderText}>{item.dateLabel}</Text>
-                </View>
+              <View></View>
               );
             }
             return (
@@ -152,9 +150,27 @@ export default function PendenciasScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.white },
-  listContainer: { flex: 1, backgroundColor: '#F8FAFC' },
-  listContent: { paddingVertical: a(16), paddingHorizontal: l(16), paddingBottom: a(60) },
-  dateHeaderContainer: { marginTop: a(8), marginBottom: a(12), paddingHorizontal: l(4) },
-  dateHeaderText: { fontSize: td(14), fontFamily: fonts.robotoBold, color: Colors.corTextSecondary },
+  container: { 
+    flex: 1, 
+    backgroundColor: Colors.white 
+  },
+  listContainer: { 
+    flex: 1, 
+    backgroundColor: Colors.white
+  },
+  listContent: { 
+    paddingVertical: a(10), 
+    paddingHorizontal: l(10), 
+    paddingBottom: a(60) 
+  },
+  dateHeaderContainer: { 
+    paddingHorizontal: l(10),
+    paddingVertical: a(4),
+    borderRadius: td(6),
+  },
+  dateHeaderText: { 
+    fontSize: td(12),
+    fontFamily: fonts.robotoMedium,
+    color: Colors.corTextSecondary,
+  },
 });

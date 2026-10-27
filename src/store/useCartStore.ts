@@ -1,51 +1,50 @@
 import { create } from 'zustand';
 
-export type ItemType = 'APPOINTMENT' | 'PRODUCT' | 'CUSTOM';
+// Diferenciamos 'SERVICE' (serviço do catálogo) de 'CUSTOM' (venda avulsa sem item)
+export type ItemType = 'APPOINTMENT' | 'SERVICE' | 'PRODUCT' | 'CUSTOM';
 
 export interface CartItem {
-  localId: string; // ID temporário gerado no app para o FlatList/FlashList
+  localId: string;
   type: ItemType;
-  referenceId?: string | null; // ID do agendamento ou do produto real (null para CUSTOM)
+  referenceId?: string | null;
   description: string;
   quantity: number;
   unitPrice: number;
+  
+  // Metadados visuais para Agendamento e Serviço
+  startTime?: string;
+  endTime?: string;
+  durationMinutes?: number;
+  employeeName?: string;
+  appointmentStatus?: string; 
 }
 
 interface CartState {
-  // Identificadores de Contexto
   companyId: string | null;
   clientId: string | null;
   employeeId: string | null;
   
-  // Transação
   items: CartItem[];
+  customSaleAmount: number;
   discount: number;
   tip: number;
   paymentMethod: string | null;
 
-  // Ações de Contexto
-  setContext: (
-    companyId?: string | null, 
-    clientId?: string | null, 
-    employeeId?: string | null
-  ) => void;
+  setContext: (companyId?: string | null, clientId?: string | null, employeeId?: string | null) => void;
   
-  // Ações de Itens
   addItem: (item: Omit<CartItem, 'localId'>) => void;
   removeItem: (localId: string) => void;
   updateItemQuantity: (localId: string, quantity: number) => void;
   updateItemPrice: (localId: string, newPrice: number) => void;
+  setCustomSaleAmount: (amount: number) => void;
   
-  // Ações Financeiras
   setDiscount: (discount: number) => void;
   setTip: (tip: number) => void;
   setPaymentMethod: (method: string) => void;
   
-  // Utilitários Matemáticos (Getters lidos sob demanda)
   getSubtotal: () => number;
   getTotal: () => number;
   
-  // Finalização
   clearCart: () => void;
   buildCheckoutPayload: () => any;
 }
@@ -55,7 +54,8 @@ export const useCartStore = create<CartState>((set, get) => ({
   clientId: null,
   employeeId: null,
 
-  items: [], 
+  items: [],
+  customSaleAmount: 0,
   discount: 0,
   tip: 0,
   paymentMethod: null,
@@ -65,21 +65,21 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   addItem: (item) => 
     set((state) => {
-      // Impede duplicação de agendamento
+      // Impede duplicar o mesmo agendamento
       if (item.type === 'APPOINTMENT' && item.referenceId) {
         const exists = state.items.some(i => i.referenceId === item.referenceId);
         if (exists) return state;
       }
 
-      // Se for um PRODUTO ou SERVIÇO de catálogo já inserido, apenas incrementa a quantidade
-      if (item.referenceId && item.type !== 'APPOINTMENT') {
+      // Somente PRODUCT incrementa quantidade ao ser selecionado novamente
+      if (item.type === 'PRODUCT' && item.referenceId) {
         const existingIndex = state.items.findIndex(
-          i => i.referenceId === item.referenceId && i.type === item.type
+          i => i.referenceId === item.referenceId && i.type === 'PRODUCT'
         );
         if (existingIndex > -1) {
           const updated = [...state.items];
           updated[existingIndex].quantity += item.quantity;
-          return { items: updated };
+          return { items: updated, customSaleAmount: 0 };
         }
       }
       
@@ -87,7 +87,15 @@ export const useCartStore = create<CartState>((set, get) => ({
         ...item,
         localId: Math.random().toString(36).substring(2, 9),
       };
-      return { items: [...state.items, newItem] };
+
+      // Mantém APPOINTMENT sempre no topo da lista
+      const nextItems = [...state.items, newItem].sort((a, b) => {
+        if (a.type === 'APPOINTMENT' && b.type !== 'APPOINTMENT') return -1;
+        if (a.type !== 'APPOINTMENT' && b.type === 'APPOINTMENT') return 1;
+        return 0;
+      });
+
+      return { items: nextItems, customSaleAmount: 0 };
     }),
 
   removeItem: (localId) => 
@@ -109,12 +117,19 @@ export const useCartStore = create<CartState>((set, get) => ({
       )
     })),
 
+  setCustomSaleAmount: (amount) => set({ customSaleAmount: Math.max(0, amount) }),
+
   setDiscount: (discount) => set({ discount: Math.max(0, discount) }),
   setTip: (tip) => set({ tip: Math.max(0, tip) }),
   setPaymentMethod: (paymentMethod) => set({ paymentMethod }),
 
   getSubtotal: () => {
-    return get().items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+    const state = get();
+    // Se não há itens selecionados, o subtotal passa a ser o valor avulso digitado
+    if (state.items.length === 0) {
+      return state.customSaleAmount;
+    }
+    return state.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
   },
 
   getTotal: () => {
@@ -125,15 +140,36 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   clearCart: () => set({
     items: [],
+    customSaleAmount: 0,
     discount: 0,
     tip: 0,
     paymentMethod: null,
-    clientId: null, // Limpa o cliente, mas mantém a companyId e employeeId (o caixa continua aberto)
+    clientId: null,
   }),
 
-  // Monta o objeto exato esperado pelo CheckoutRequestDTO do Java
   buildCheckoutPayload: () => {
     const state = get();
+
+    // Se o carrinho estiver vazio, mas houver um valor avulso definido, gera 1 item CUSTOM para o Backend
+    const payloadItems = state.items.length > 0 
+      ? state.items.map(i => ({
+          // No Java o Enum aceita APPOINTMENT, PRODUCT ou CUSTOM (convertemos SERVICE -> CUSTOM no envio)
+          type: i.type === 'SERVICE' ? 'CUSTOM' : i.type,
+          referenceId: i.referenceId || null,
+          description: i.description,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice
+        }))
+      : [
+          {
+            type: 'CUSTOM',
+            referenceId: null,
+            description: 'Venda Avulsa',
+            quantity: 1,
+            unitPrice: state.customSaleAmount
+          }
+        ];
+
     return {
       companyId: state.companyId || null,
       clientId: state.clientId || null,
@@ -141,13 +177,7 @@ export const useCartStore = create<CartState>((set, get) => ({
       discount: state.discount,
       tip: state.tip,
       paymentMethod: state.paymentMethod || 'PIX',
-      items: state.items.map(i => ({
-        type: i.type,
-        referenceId: i.referenceId || null,
-        description: i.description,
-        quantity: i.quantity,
-        unitPrice: i.unitPrice
-      }))
+      items: payloadItems
     };
   }
 }));

@@ -261,8 +261,8 @@ export default function NovoServicoScreen() {
           >
             <View style={styles.card}>
               <FormInput
-                label="Nome do Serviço *"
-                placeholder="Ex: Corte de Cabelo"
+                label="Serviço *"
+                placeholder="Nome do serviço"
                 returnKeyType="done"
                 value={form.name}
                 onChangeText={(t) => {
@@ -276,7 +276,7 @@ export default function NovoServicoScreen() {
                 <View style={styles.halfInput}>
                   <FormInput
                     label="Preço *"
-                    placeholder="Preço"
+                    placeholder="0,00"
                     prefix="R$"
                     keyboardType="numeric"
                     returnKeyType="done"

@@ -117,16 +117,21 @@ export default function ReceiptScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F1F5F9' },
+  container: { flex: 1, backgroundColor: Colors.white },
   centerBox: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: l(24) },
   errorText: { marginTop: a(12), fontSize: td(14), fontFamily: fonts.robotoRegular, color: Colors.corTextSecondary, textAlign: 'center' },
-  scrollContent: { padding: l(16), paddingBottom: a(40) },
+  scrollContent: { paddingHorizontal: l(16), paddingTop:a(10), paddingBottom: a(40) },
   receiptPaper: {
     backgroundColor: Colors.white,
     borderRadius: td(16),
     padding: l(20),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderHairLine,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 8, 
   },
   receiptHeader: { alignItems: 'center', marginBottom: a(16) },
   iconCircle: { width: td(52), height: td(52), borderRadius: td(26), backgroundColor: '#DCFCE7', justifyContent: 'center', alignItems: 'center', marginBottom: a(10) },

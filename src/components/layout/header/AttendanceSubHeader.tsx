@@ -32,7 +32,7 @@ export const AttendanceSubHeader: React.FC<AttendanceSubHeaderProps> = ({
         activeOpacity={0.7}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
-        <Ionicons name="arrow-back" size={td(22)} color={Colors.corTextTitle} />
+        <Ionicons name="arrow-back" size={td(22)} color={Colors.corText} />
       </TouchableOpacity>
 
       <View style={styles.titleContainer}>
@@ -66,20 +66,17 @@ export const AttendanceSubHeader: React.FC<AttendanceSubHeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    height: a(56),
+    height: a(50),
     backgroundColor: Colors.white,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: l(16),
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
   backBtn: {
     width: td(36),
     height: td(36),
     borderRadius: td(18),
-    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
   },

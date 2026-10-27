@@ -167,7 +167,6 @@ export default function AtendimentoHubScreen() {
         styles.pendingBanner, 
         metrics.pendingCheckoutsCount === 0 && styles.pendingBannerClean
       ]} 
-      activeOpacity={0.85}
       onPress={() => router.push('/(main)/(stack)/pendencias' as any)}
     >
       <View style={styles.pendingBannerLeft}>
@@ -346,16 +345,21 @@ const styles = StyleSheet.create({
     borderRadius: td(12),
     padding: l(12),
     marginBottom: a(12),
-  },
+  
+    
+    
+  }, 
   pendingBannerClean: {
     backgroundColor: '#F8FAFC',
     borderColor: Colors.border,
+    
   },
   pendingBannerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: l(10),
     flex: 1,
+    
   },
   pendingBadgeIcon: {
     width: td(40),
@@ -382,6 +386,7 @@ const styles = StyleSheet.create({
     gap: l(10),
     marginBottom: a(14),
     marginHorizontal: l(10),
+    
   },
   btnQuickSale: {
     flex: 1,
@@ -392,6 +397,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.corScreen,
     height: a(44),
     borderRadius: td(10),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3, 
   },
   btnQuickSaleText: {
     fontSize: td(13),
@@ -409,6 +419,11 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderHairLine,
     height: a(44),
     borderRadius: td(10),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3, 
   },
   btnQuickExpenseText: {
     fontSize: td(13),
@@ -443,7 +458,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   miniPillText: {
-    fontSize: td(11),
+    fontSize: td(12),
     fontFamily: fonts.robotoMedium,
     color: Colors.corTextSecondary,
   },

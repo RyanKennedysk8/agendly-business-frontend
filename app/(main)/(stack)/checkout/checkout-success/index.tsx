@@ -18,7 +18,7 @@ export default function CheckoutSuccessScreen() {
 
   const handleViewReceipt = () => {
     router.replace({
-      pathname: '/(main)/(tabs)/atendimento/receipt',
+      pathname: '/(main)/(stack)/receipt' as any,
       params: {
         ...(saleId ? { saleId } : {}),
         ...(appointmentId ? { appointmentId } : {}),
@@ -28,7 +28,7 @@ export default function CheckoutSuccessScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#16A34A" />
+      <StatusBar barStyle="light-content"/>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* CENTRO DA TELA: ÍCONE DE VERIFICADO + TEXTO EM BRANCO */}

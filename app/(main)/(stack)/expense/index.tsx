@@ -27,7 +27,7 @@ const EXPENSE_CATEGORIES: { id: ExpenseCategory; label: string; icon: string }[]
   { id: 'OTHER', label: 'Outros', icon: 'ellipsis-horizontal-circle-outline' },
 ];
 
-export default function CreateExpenseScreen() {
+export default function CreateExpenseScreen() { 
   const router = useRouter();
   
   const [expenseDesc, setExpenseDesc] = useState('');
@@ -80,7 +80,7 @@ export default function CreateExpenseScreen() {
           <Text style={styles.inputLabel}>O que foi comprado ou pago?</Text>
           <TextInput
             style={styles.input}
-            placeholder="Ex: 5x Pomadas Matte / Café e Água"
+            placeholder="Ex: 5 Pomadas / 1 Café e Água"
             value={expenseDesc}
             onChangeText={setExpenseDesc}
           />
@@ -105,7 +105,7 @@ export default function CreateExpenseScreen() {
                   onPress={() => setExpenseCategory(cat.id)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name={cat.icon as any} size={td(16)} color={selected ? '#E11D48' : Colors.corTextSecondary} />
+                  <Ionicons name={cat.icon as any} size={td(16)} color={selected ? Colors.error : Colors.corTextSecondary} />
                   <Text style={[styles.categoryChipText, selected && styles.categoryChipTextActive]}>{cat.label}</Text>
                 </TouchableOpacity>
               );
@@ -135,34 +135,40 @@ export default function CreateExpenseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.white,
   },
   scrollContent: {
-    padding: l(16),
+    padding: l(10),
   },
   formSection: {
     backgroundColor: Colors.white,
     padding: l(16),
     borderRadius: td(12),
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderHairLine,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3, 
   },
   inputLabel: {
-    fontSize: td(13),
+    fontSize: td(12),
     fontFamily: fonts.robotoMedium,
-    color: Colors.corTextSecondary,
+    color: Colors.corTextTitle,
     marginBottom: a(8),
+    marginLeft:l(5)
   },
   input: {
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderHairLine,
     borderRadius: td(10),
     paddingHorizontal: l(12),
-    height: a(48),
+    height: a(40),
     fontSize: td(14),
     fontFamily: fonts.robotoRegular,
     color: Colors.corText,
-    marginBottom: a(20),
+    marginBottom: a(15),
   },
   categoryGrid: {
     flexDirection: 'row',
@@ -190,20 +196,20 @@ const styles = StyleSheet.create({
     color: Colors.corTextSecondary,
   },
   categoryChipTextActive: {
-    color: '#E11D48',
+    color: Colors.error,
     fontFamily: fonts.robotoBold,
   },
   footer: {
     backgroundColor: Colors.white,
     paddingHorizontal: l(16),
-    paddingTop: a(16),
-    paddingBottom: a(32),
+    paddingTop: a(10),
+    paddingBottom: a(30),
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.borderHairLine,
   },
   btnSaveExpense: {
-    backgroundColor: '#E11D48',
-    height: a(56),
+    backgroundColor: Colors.error,
+    height: a(40),
     borderRadius: td(12),
     justifyContent: 'center',
     alignItems: 'center',

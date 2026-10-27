@@ -40,14 +40,12 @@ export const AttendanceMainHeader: React.FC<AttendanceMainHeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    height: a(56),
+    height: a(45),
     backgroundColor: Colors.white,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: l(16),
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
   title: {
     fontSize: td(20),

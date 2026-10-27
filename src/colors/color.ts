@@ -48,16 +48,16 @@ export type ColorPalette = {
 
     corButton: '#008B8B', 
     corButtonDisable: "rgba(0,139,139, 0.3)",
-    corButtonOff:'#cccccc',
+    corButtonOff: "rgba(0,139,139, 0.1)",
     corButtonRGB:"rgba(0,139,139, 1)",
   
     corText: '#262626',              
-    corTextSecondary: 'rgba(38,38,38,0.6)', 
+    corTextSecondary: '#525252', 
     corTextLight: '#737373',            
     corTextStrong: '#1C1C1E',            
     corTextSearch: '#8A8A8A',  
     corTextInfo:'#64748B',   
-    corTextTitle:'#1E293B',      
+    corTextTitle:'#374151',      
   
     transparente:"#00000000",
     semiTransparente:"rgba(0,0,0,0.6)",
